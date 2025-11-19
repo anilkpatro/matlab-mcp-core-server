@@ -1,6 +1,6 @@
 # MATLAB MCP Core Server
 
-Run MATLAB® using AI applications. The MATLAB MCP Core Server allows your AI applications to:
+Run MATLAB® using AI applications with the official MATLAB MCP Server from MathWorks®. The MATLAB MCP Core Server allows your AI applications to:
 
 - Start and quit MATLAB.
 - Write and run MATLAB code.
