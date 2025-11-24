@@ -33,9 +33,9 @@ func TestFactory_CreateFileWithUniqueSuffix_HappyPath(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := "/tmp"
+	dir := filepath.Join("/tmp")
 	pattern := "testfile"
-	expectedFileName := "/tmp/testfile-12345"
+	expectedFileName := filepath.Join("/tmp/testfile-12345")
 	expectedSuffix := "12345"
 
 	mockOSLayer.EXPECT().
@@ -72,9 +72,9 @@ func TestFactory_CreateFileWithUniqueSuffix_PatternAlreadyHasSeparator(t *testin
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := "/tmp"
+	dir := filepath.Join("/tmp")
 	pattern := "testfile-"
-	expectedFileName := "/tmp/testfile-67890"
+	expectedFileName := filepath.Join("/tmp/testfile-67890")
 	expectedSuffix := "67890"
 
 	mockOSLayer.EXPECT().
@@ -111,10 +111,10 @@ func TestFactory_CreateFileWithUniqueSuffix_FileWithExtension(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := "/var/log/app"
+	dir := filepath.Join("/var/log/app")
 	pattern := "logfile"
 	extension := ".log"
-	expectedFileName := "/var/log/app/logfile-999.log"
+	expectedFileName := filepath.Join("/var/log/app/logfile-999.log")
 	expectedSuffix := "999"
 
 	mockOSLayer.EXPECT().
@@ -148,7 +148,7 @@ func TestFactory_CreateFileWithUniqueSuffix_CreateTempError(t *testing.T) {
 	mockOSLayer := &filesmock.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
-	dir := "/tmp"
+	dir := filepath.Join("/tmp")
 	pattern := "testfile"
 	expectedError := assert.AnError
 
@@ -176,7 +176,7 @@ func TestFactory_CreateFileWithUniqueSuffix_CloseError(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := "/tmp"
+	dir := filepath.Join("/tmp")
 	pattern := "testfile"
 	expectedError := assert.AnError
 

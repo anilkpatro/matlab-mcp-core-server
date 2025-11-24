@@ -7,6 +7,14 @@ else
 	SHELL = sh
 endif
 
+# Race detector flag
+# Note: Disabled on Windows because CI agents don't have gcc available (required for -race)
+ifeq ($(OS),Windows_NT)
+    RACE_FLAG =
+else
+    RACE_FLAG = -race
+endif
+
 SEMANTIC_VERSION=v0.1.0
 COMMIT_HASH := $(shell git rev-parse HEAD)
 
@@ -27,6 +35,9 @@ else
 	BIN_PATH = $(CURDIR)/.bin/glnxa64
 endif
 
+export HOST = localhost
+export PATH := $(BIN_PATH)$(PATHSEP)$(PATH)
+
 # Go build flags
 LDFLAGS := -ldflags "-X 'github.com/matlab/matlab-mcp-core-server/internal/adaptors/application/config.version=$(VERSION)'"
 
@@ -37,12 +48,7 @@ version:
 	@echo $(VERSION)
 
 mcp-inspector: build
-ifeq ($(OS),Windows_NT)
-	$$env:HOST='localhost'; $$env:PATH='$(BIN_PATH)$(PATHSEP)$(PATH)'; npx @modelcontextprotocol/inspector matlab-mcp-core-server
-else
-	HOST=localhost PATH="$(BIN_PATH)$(PATHSEP)$(PATH)" npx @modelcontextprotocol/inspector $(if $(DISPLAY),-e DISPLAY=$(DISPLAY)) matlab-mcp-core-server
-endif
-
+	npx @modelcontextprotocol/inspector matlab-mcp-core-server
 
 # File checks
 
@@ -103,7 +109,7 @@ unit-tests:
 	gotestsum --packages ./internal/... -- -race -coverprofile cover.out
 
 ci-unit-tests:
-	go test -race -json -count=1 -coverprofile cover.out ./internal/...
+	go test $(RACE_FLAG) -json -count=1 -coverprofile cover.out ./internal/...
 
 ci-system-tests:
-	go test -race -timeout 120m -json -count=1 ./tests/system/
+	go test $(RACE_FLAG) -timeout 120m -json -count=1 ./tests/system/
