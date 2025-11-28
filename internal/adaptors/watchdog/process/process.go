@@ -5,6 +5,7 @@ package process
 import (
 	"io"
 
+	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/application/inputs/flags"
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
 	"github.com/matlab/matlab-mcp-core-server/internal/facades/osfacade"
 	"github.com/matlab/matlab-mcp-core-server/internal/utils/stdio"
@@ -17,6 +18,11 @@ type OSLayer interface {
 
 type LoggerFactory interface {
 	GetGlobalLogger() entities.Logger
+}
+
+type Directory interface {
+	BaseDir() string
+	ID() string
 }
 
 type Process struct {
@@ -32,11 +38,15 @@ type Process struct {
 func New(
 	osLayer OSLayer,
 	loggerFactory LoggerFactory,
+	directory Directory,
 ) (*Process, error) {
 	logger := loggerFactory.GetGlobalLogger()
 
 	programPath := osLayer.Args()[0]
-	cmd := osLayer.Command(programPath, "--watchdog")
+	cmd := osLayer.Command(programPath,
+		"--"+flags.WatchdogMode,
+		"--"+flags.BaseDir, directory.BaseDir(),
+		"--"+flags.ServerInstanceID, directory.ID())
 
 	watchdogProcessStdin, err := cmd.StdinPipe()
 	if err != nil {

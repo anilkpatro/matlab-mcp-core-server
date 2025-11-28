@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/application/inputs/flags"
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
 	"github.com/spf13/pflag"
 )
@@ -26,6 +27,7 @@ type Config struct {
 	preferredMATLABStartingDirectory string
 	baseDirectory                    string
 	watchdogMode                     bool
+	serverInstanceID                 string
 }
 
 func New(
@@ -86,12 +88,16 @@ func (c *Config) WatchdogMode() bool {
 	return c.watchdogMode
 }
 
+func (c *Config) ServerInstanceID() string {
+	return c.serverInstanceID
+}
+
 func (c *Config) RecordToLogger(logger entities.Logger) {
 	logger.
-		With(disableTelemetry, c.disableTelemetry).
-		With(useSingleMATLABSession, c.useSingleMATLABSession).
-		With(logLevel, c.logLevel).
-		With(preferredLocalMATLABRoot, c.preferredLocalMATLABRoot).
-		With(preferredMATLABStartingDirectory, c.preferredMATLABStartingDirectory).
+		With(flags.DisableTelemetry, c.disableTelemetry).
+		With(flags.UseSingleMATLABSession, c.useSingleMATLABSession).
+		With(flags.LogLevel, c.logLevel).
+		With(flags.PreferredLocalMATLABRoot, c.preferredLocalMATLABRoot).
+		With(flags.PreferredMATLABStartingDirectory, c.preferredMATLABStartingDirectory).
 		Info("Configuration state")
 }

@@ -128,6 +128,7 @@ func initializeOrchestrator() (*orchestrator.Orchestrator, error) {
 		process.New,
 		wire.Bind(new(process.OSLayer), new(*osfacade.OsFacade)),
 		wire.Bind(new(process.LoggerFactory), new(*logger.Factory)),
+		wire.Bind(new(process.Directory), new(*directory.Directory)),
 
 		// Watchdog Transport Factory
 		transport.NewFactory,
@@ -304,6 +305,7 @@ func initializeOrchestrator() (*orchestrator.Orchestrator, error) {
 func initializeWatchdog() (*watchdogprocess.Watchdog, error) {
 	wire.Build( // Watchdog Process
 		watchdogprocess.New,
+		wire.Bind(new(watchdogprocess.LoggerFactory), new(*logger.Factory)),
 		wire.Bind(new(watchdogprocess.OSLayer), new(*osfacade.OsFacade)),
 		wire.Bind(new(watchdogprocess.ProcessHandler), new(*processhandler.ProcessHandler)),
 		wire.Bind(new(watchdogprocess.OSSignaler), new(*ossignaler.OSSignaler)),
@@ -317,6 +319,19 @@ func initializeWatchdog() (*watchdogprocess.Watchdog, error) {
 		transport.NewFactory,
 
 		// Low-level Interfaces
+		logger.NewFactory,
+		wire.Bind(new(logger.Config), new(*config.Config)),
+		wire.Bind(new(logger.Directory), new(*directory.Directory)),
+		wire.Bind(new(logger.FilenameFactory), new(*files.Factory)),
+		wire.Bind(new(logger.OSLayer), new(*osfacade.OsFacade)),
+		directory.New,
+		wire.Bind(new(directory.Config), new(*config.Config)),
+		wire.Bind(new(directory.FilenameFactory), new(*files.Factory)),
+		wire.Bind(new(directory.OSLayer), new(*osfacade.OsFacade)),
+		config.New,
+		wire.Bind(new(config.OSLayer), new(*osfacade.OsFacade)),
+		files.NewFactory,
+		wire.Bind(new(files.OSLayer), new(*osfacade.OsFacade)),
 		oswrapper.New,
 		wire.Bind(new(oswrapper.OSLayer), new(*osfacade.OsFacade)),
 		ossignaler.New,

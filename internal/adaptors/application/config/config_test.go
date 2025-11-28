@@ -23,6 +23,7 @@ type expectedConfig struct {
 	preferredMATLABStartingDirectory string
 	baseDirectory                    string
 	watchdogMode                     bool
+	serverInstanceID                 string
 }
 
 func TestNew_HappyPath(t *testing.T) {
@@ -43,6 +44,7 @@ func TestNew_HappyPath(t *testing.T) {
 				preferredMATLABStartingDirectory: "",
 				baseDirectory:                    "",
 				watchdogMode:                     false,
+				serverInstanceID:                 "",
 			},
 		},
 		{
@@ -56,6 +58,7 @@ func TestNew_HappyPath(t *testing.T) {
 				"--initial-working-folder=/pref",
 				"--log-folder=/logs",
 				"--watchdog=true",
+				"--server-instance-id=69878763",
 			},
 			expected: expectedConfig{
 				versionMode:                      true,
@@ -66,6 +69,7 @@ func TestNew_HappyPath(t *testing.T) {
 				preferredMATLABStartingDirectory: "/pref",
 				baseDirectory:                    "/logs",
 				watchdogMode:                     true,
+				serverInstanceID:                 "69878763",
 			},
 		},
 	}
@@ -96,6 +100,7 @@ func TestNew_HappyPath(t *testing.T) {
 			assert.Equal(t, testConfig.expected.preferredMATLABStartingDirectory, cfg.PreferredMATLABStartingDirectory())
 			assert.Equal(t, testConfig.expected.baseDirectory, cfg.BaseDir())
 			assert.Equal(t, testConfig.expected.watchdogMode, cfg.WatchdogMode())
+			assert.Equal(t, testConfig.expected.serverInstanceID, cfg.ServerInstanceID())
 		})
 	}
 }

@@ -18,12 +18,10 @@ type TransportFactory interface {
 
 type LoggerFactory interface {
 	GetGlobalLogger() entities.Logger
-	GetWatchdogLogger() entities.Logger
 }
 
 type Watchdog struct {
-	logger         entities.Logger
-	watchdogLogger entities.Logger
+	logger entities.Logger
 
 	transportFactory TransportFactory
 	watchdogProcess  WatchdogProcess
@@ -39,8 +37,7 @@ func New(
 	loggerFactory LoggerFactory,
 ) *Watchdog {
 	return &Watchdog{
-		logger:         loggerFactory.GetGlobalLogger(),
-		watchdogLogger: loggerFactory.GetWatchdogLogger(),
+		logger: loggerFactory.GetGlobalLogger(),
 
 		transportFactory: transportFactory,
 		watchdogProcess:  watchdogProcess,
@@ -51,7 +48,6 @@ func New(
 
 func (w *Watchdog) Start() error {
 	w.logger.Debug("Starting watchdog")
-	processLogger := w.watchdogLogger
 
 	client, err := w.transportFactory.NewClient(w.watchdogProcess.Stdio())
 	if err != nil {
@@ -59,28 +55,6 @@ func (w *Watchdog) Start() error {
 	}
 
 	w.client = client
-
-	go func() {
-		debugMessageC := client.DebugMessagesC()
-		for {
-			message, ok := <-debugMessageC
-			if !ok {
-				return
-			}
-			processLogger.Info(message)
-		}
-	}()
-
-	go func() {
-		errMessageC := client.ErrorMessagesC()
-		for {
-			message, ok := <-errMessageC
-			if !ok {
-				return
-			}
-			processLogger.Warn(message)
-		}
-	}()
 
 	err = w.watchdogProcess.Start()
 	if err != nil {

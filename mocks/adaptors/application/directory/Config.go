@@ -78,3 +78,47 @@ func (_c *MockConfig_BaseDir_Call) RunAndReturn(run func() string) *MockConfig_B
 	_c.Call.Return(run)
 	return _c
 }
+
+// ServerInstanceID provides a mock function for the type MockConfig
+func (_mock *MockConfig) ServerInstanceID() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ServerInstanceID")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// MockConfig_ServerInstanceID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ServerInstanceID'
+type MockConfig_ServerInstanceID_Call struct {
+	*mock.Call
+}
+
+// ServerInstanceID is a helper method to define mock.On call
+func (_e *MockConfig_Expecter) ServerInstanceID() *MockConfig_ServerInstanceID_Call {
+	return &MockConfig_ServerInstanceID_Call{Call: _e.mock.On("ServerInstanceID")}
+}
+
+func (_c *MockConfig_ServerInstanceID_Call) Run(run func()) *MockConfig_ServerInstanceID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockConfig_ServerInstanceID_Call) Return(s string) *MockConfig_ServerInstanceID_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *MockConfig_ServerInstanceID_Call) RunAndReturn(run func() string) *MockConfig_ServerInstanceID_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -103,7 +103,7 @@ func initializeOrchestrator() (*orchestrator.Orchestrator, error) {
 	directoryFactory := directorymanager.NewFactory(osFacade, directoryDirectory, matlabFiles)
 	processDetails := processdetails.New(osFacade)
 	matlabProcessLauncher := processlauncher.New()
-	processProcess, err := process.New(osFacade, loggerFactory)
+	processProcess, err := process.New(osFacade, loggerFactory, directoryDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -148,11 +148,24 @@ func initializeOrchestrator() (*orchestrator.Orchestrator, error) {
 
 func initializeWatchdog() (*watchdog2.Watchdog, error) {
 	osFacade := osfacade.New()
+	configConfig, err := config.New(osFacade)
+	if err != nil {
+		return nil, err
+	}
+	factory := files.NewFactory(osFacade)
+	directoryDirectory, err := directory.New(configConfig, factory, osFacade)
+	if err != nil {
+		return nil, err
+	}
+	loggerFactory, err := logger.NewFactory(configConfig, directoryDirectory, factory, osFacade)
+	if err != nil {
+		return nil, err
+	}
 	osWrapper := oswrapper.New(osFacade)
 	processHandler := processhandler.New(osWrapper)
 	osSignaler := ossignaler.New()
-	factory := transport.NewFactory()
-	watchdogWatchdog := watchdog2.New(osFacade, processHandler, osSignaler, factory)
+	transportFactory := transport.NewFactory()
+	watchdogWatchdog := watchdog2.New(loggerFactory, osFacade, processHandler, osSignaler, transportFactory)
 	return watchdogWatchdog, nil
 }
 

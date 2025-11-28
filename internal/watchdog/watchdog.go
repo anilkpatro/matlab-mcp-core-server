@@ -7,7 +7,6 @@ package watchdog
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -16,6 +15,10 @@ import (
 	"github.com/matlab/matlab-mcp-core-server/internal/utils/stdio"
 	"github.com/matlab/matlab-mcp-core-server/internal/watchdog/transport"
 )
+
+type LoggerFactory interface {
+	GetGlobalLogger() entities.Logger
+}
 
 type OSLayer interface {
 	Getppid() int
@@ -38,6 +41,7 @@ type TransportFactory interface {
 }
 
 type Watchdog struct {
+	logger           entities.Logger
 	osLayer          OSLayer
 	processHandler   ProcessHandler
 	osSignaler       OSSignaler
@@ -49,12 +53,14 @@ type Watchdog struct {
 }
 
 func New(
+	loggerFactory LoggerFactory,
 	osLayer OSLayer,
 	processHandler ProcessHandler,
 	osSignaler OSSignaler,
 	transportFactory TransportFactory,
 ) *Watchdog {
 	return &Watchdog{
+		logger:           loggerFactory.GetGlobalLogger(),
 		osLayer:          osLayer,
 		processHandler:   processHandler,
 		osSignaler:       osSignaler,
@@ -75,8 +81,8 @@ func (w *Watchdog) StartAndWaitForCompletion(_ context.Context) error {
 		return err
 	}
 
-	receiver.SendDebugMessage("Watchdog process has started")
-	defer receiver.SendDebugMessage("Watchdog process has exited")
+	w.logger.Info("Watchdog process has started")
+	defer w.logger.Info("Watchdog process has exited")
 
 	w.parentPID = w.osLayer.Getppid()
 
@@ -92,10 +98,10 @@ func (w *Watchdog) StartAndWaitForCompletion(_ context.Context) error {
 				return
 			case rawMessage, ok := <-c:
 				if !ok {
-					receiver.SendErrorMessage("Receiver channel closed unexpectedly")
+					w.logger.Error("Receiver channel closed unexpectedly")
 					return
 				}
-				if abort := w.processIncomingMessage(receiver, rawMessage); abort {
+				if abort := w.processIncomingMessage(rawMessage); abort {
 					close(shutdownC)
 					return
 				}
@@ -106,27 +112,27 @@ func (w *Watchdog) StartAndWaitForCompletion(_ context.Context) error {
 	select {
 	case <-shutdownC:
 		defer func() {
-			receiver.SendDebugMessage("Graceful shutdown completed")
+			w.logger.Debug("Graceful shutdown completed")
 			err := receiver.SendGracefulShutdownCompleted()
 			if err != nil {
-				receiver.SendErrorMessage("Failed to send graceful shutdown completed signal")
+				w.logger.WithError(err).Error("Failed to send graceful shutdown completed signal")
 			}
 		}()
-		receiver.SendDebugMessage("Graceful shutdown signal received")
+		w.logger.Debug("Graceful shutdown signal received")
 
 	case <-w.processHandler.WatchProcessAndGetTerminationChan(w.parentPID):
-		receiver.SendDebugMessage("Lost connection to parent, shutting down")
+		w.logger.Debug("Lost connection to parent, shutting down")
 
 	case <-w.osSignaler.InterruptSignalChan():
-		receiver.SendDebugMessage("Received unexpected graceful shutdown OS signal")
+		w.logger.Debug("Received unexpected graceful shutdown OS signal")
 	}
 
-	w.terminateAllProcesses(receiver)
+	w.terminateAllProcesses()
 
 	return nil
 }
 
-func (w *Watchdog) processIncomingMessage(receiver transport.Receiver, rawMessage transport.Message) (abort bool) {
+func (w *Watchdog) processIncomingMessage(rawMessage transport.Message) (abort bool) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
@@ -134,7 +140,9 @@ func (w *Watchdog) processIncomingMessage(receiver transport.Receiver, rawMessag
 
 	switch message := rawMessage.(type) {
 	case transport.ProcessToKill:
-		receiver.SendDebugMessage(fmt.Sprintf("Adding process %d to kill", message.PID))
+		w.logger.
+			With("pid", message.PID).
+			Info("Adding process to kill")
 		w.processPIDsToKill[message.PID] = struct{}{}
 	case transport.Shutdown:
 		abort = true
@@ -143,17 +151,24 @@ func (w *Watchdog) processIncomingMessage(receiver transport.Receiver, rawMessag
 	return
 }
 
-func (w *Watchdog) terminateAllProcesses(receiver transport.Receiver) {
+func (w *Watchdog) terminateAllProcesses() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	receiver.SendDebugMessage(fmt.Sprintf("Trying to terminate %d children", len(w.processPIDsToKill)))
+	w.logger.
+		With("count", len(w.processPIDsToKill)).
+		Info("Trying to terminate children")
 
 	for pid := range w.processPIDsToKill {
-		receiver.SendDebugMessage(fmt.Sprintf("Killing process with PID %d", pid))
+		w.logger.
+			With("pid", pid).
+			Debug("Killing process")
 
 		if err := w.processHandler.KillProcess(pid); err != nil {
-			receiver.SendErrorMessage(fmt.Sprintf("Failed to kill child with PID: %d", pid))
+			w.logger.
+				WithError(err).
+				With("pid", pid).
+				Error("Failed to kill child")
 		}
 	}
 }

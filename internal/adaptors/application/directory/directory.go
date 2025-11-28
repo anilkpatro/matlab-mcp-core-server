@@ -19,6 +19,7 @@ const (
 
 type Config interface {
 	BaseDir() string
+	ServerInstanceID() string
 }
 
 type FilenameFactory interface {
@@ -56,14 +57,20 @@ func New(
 		}
 	}
 
-	_, id, err := filenameFactory.CreateFileWithUniqueSuffix(filepath.Join(baseDir, markerFileName), "")
-	if err != nil {
-		return nil, err
+	serverInstanceID := config.ServerInstanceID()
+
+	if serverInstanceID == "" {
+		_, id, err := filenameFactory.CreateFileWithUniqueSuffix(filepath.Join(baseDir, markerFileName), "")
+		if err != nil {
+			return nil, err
+		}
+
+		serverInstanceID = id
 	}
 
 	return &Directory{
 		baseDir: baseDir,
-		id:      id,
+		id:      serverInstanceID,
 
 		osFacade: osFacade,
 	}, nil
@@ -90,5 +97,6 @@ func (d *Directory) CreateSubDir(pattern string) (string, error) {
 func (d *Directory) RecordToLogger(logger entities.Logger) {
 	logger.
 		With("log-dir", d.baseDir).
+		With("id", d.id).
 		Info("Application directory state")
 }

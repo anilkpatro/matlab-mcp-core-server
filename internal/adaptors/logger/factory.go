@@ -25,6 +25,7 @@ const (
 
 type Config interface {
 	LogLevel() entities.LogLevel
+	WatchdogMode() bool
 }
 
 type Directory interface {
@@ -45,11 +46,6 @@ type Factory struct {
 	globalLogger         *slogLogger
 	globalLoggerLogLevel slog.Level
 	globalLoggerFile     entities.Writer
-
-	watchdogLoggerOnce     *sync.Once
-	watchdogLogger         *slogLogger
-	watchdogLoggerLogLevel slog.Level
-	watchdogLoggerFile     entities.Writer
 }
 
 func NewFactory(
@@ -66,16 +62,14 @@ func NewFactory(
 	baseDir := directory.BaseDir()
 	id := directory.ID()
 
-	logFilePath := filenameFactory.FilenameWithSuffix(filepath.Join(baseDir, logFileName), logFileExt, id)
-
-	logFile, err := osLayer.Create(logFilePath)
-	if err != nil {
-		return nil, err
+	logFileBase := filepath.Join(baseDir, logFileName)
+	if config.WatchdogMode() {
+		logFileBase = filepath.Join(baseDir, watchdogLogFileName)
 	}
 
-	watchdogFilePath := filenameFactory.FilenameWithSuffix(filepath.Join(baseDir, watchdogLogFileName), logFileExt, id)
+	logFilePath := filenameFactory.FilenameWithSuffix(logFileBase, logFileExt, id)
 
-	watchdogLogFile, err := osLayer.Create(watchdogFilePath)
+	logFile, err := osLayer.Create(logFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +78,6 @@ func NewFactory(
 		globalLoggerOnce:     new(sync.Once),
 		globalLoggerLogLevel: logLevel,
 		globalLoggerFile:     logFile,
-
-		watchdogLoggerOnce:     new(sync.Once),
-		watchdogLoggerLogLevel: logLevel,
-		watchdogLoggerFile:     watchdogLogFile,
 	}, nil
 }
 
@@ -126,18 +116,6 @@ func (f *Factory) GetGlobalLogger() entities.Logger {
 		}
 	})
 	return f.globalLogger
-}
-
-func (f *Factory) GetWatchdogLogger() entities.Logger {
-	f.watchdogLoggerOnce.Do(func() {
-		handler := slog.NewJSONHandler(f.watchdogLoggerFile, &slog.HandlerOptions{
-			Level: f.watchdogLoggerLogLevel,
-		})
-		f.watchdogLogger = &slogLogger{
-			logger: slog.New(handler),
-		}
-	})
-	return f.watchdogLogger
 }
 
 func parseLogLevel(logLevel entities.LogLevel) (slog.Level, error) {

@@ -29,23 +29,28 @@ func TestNew_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-12345"
+	logDir := filepath.Join("tmp", "matlab-mcp-core-server-12345")
+	expectedMarkerBaseName := filepath.Join(logDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
 
 	mockConfig.EXPECT().
 		BaseDir().
 		Return("").
 		Once()
 
-	mockOSLayer.EXPECT().
-		MkdirTemp("", directory.DefaultLogDirPattern).
-		Return(expectedLogDir, nil).
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server-123")
-	expectedSuffix := "123"
+	mockOSLayer.EXPECT().
+		MkdirTemp("", directory.DefaultLogDirPattern).
+		Return(logDir, nil).
+		Once()
+
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
-		Return(expectedMarkerFileName, expectedSuffix, nil).
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
+		Return("", "", nil).
 		Once()
 
 	// Act
@@ -98,25 +103,106 @@ func TestNew_SuppliedBaseDir_MkdirAllErrors(t *testing.T) {
 	mockOSLayer := &directorymocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
-	expectedLogDir := "/logs"
+	logDir := filepath.Join("logs")
+	expectedError := assert.AnError
 
 	mockConfig.EXPECT().
 		BaseDir().
-		Return(expectedLogDir).
+		Return(logDir).
 		Once()
 
-	expectedError := assert.AnError
 	mockOSLayer.EXPECT().
-		MkdirAll(expectedLogDir, os.FileMode(0o700)).
+		MkdirAll(logDir, os.FileMode(0o700)).
 		Return(expectedError).
 		Once()
 
 	// Act
 	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
 
-	//Assert
+	// Assert
 	require.ErrorIs(t, err, expectedError, "New should return the error from MkdirAll")
 	assert.Nil(t, directoryInstance, "Directory instance should be nil when error occurs")
+}
+
+func TestNew_CreateFileWithUniqueSuffixErrors(t *testing.T) {
+	// Arrange
+	mockConfig := &directorymocks.MockConfig{}
+	defer mockConfig.AssertExpectations(t)
+
+	mockFileNameFactory := &directorymocks.MockFilenameFactory{}
+	defer mockFileNameFactory.AssertExpectations(t)
+
+	mockOSLayer := &directorymocks.MockOSLayer{}
+	defer mockOSLayer.AssertExpectations(t)
+
+	logDir := filepath.Join("logs")
+	expectedMarkerFileBaseName := filepath.Join(logDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	expectedError := assert.AnError
+
+	mockConfig.EXPECT().
+		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
+		Once()
+
+	mockOSLayer.EXPECT().
+		MkdirTemp("", directory.DefaultLogDirPattern).
+		Return(logDir, nil).
+		Once()
+
+	mockFileNameFactory.EXPECT().
+		CreateFileWithUniqueSuffix(expectedMarkerFileBaseName, expectedMarkerExtension).
+		Return("", "", expectedError).
+		Once()
+
+	// Act
+	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
+
+	// Assert
+	require.ErrorIs(t, err, expectedError, "New should return the error from CreateFileWithUniqueSuffix")
+	assert.Nil(t, directoryInstance, "Directory instance should be nil when error occurs")
+}
+
+func TestNew_SuppliedServerInstanceID_NoMarkerFile(t *testing.T) {
+	// Arrange
+	mockConfig := &directorymocks.MockConfig{}
+	defer mockConfig.AssertExpectations(t)
+
+	mockFileNameFactory := &directorymocks.MockFilenameFactory{}
+	defer mockFileNameFactory.AssertExpectations(t)
+
+	mockOSLayer := &directorymocks.MockOSLayer{}
+	defer mockOSLayer.AssertExpectations(t)
+
+	logDir := filepath.Join("logs")
+	id := "1236579"
+
+	mockConfig.EXPECT().
+		BaseDir().
+		Return(logDir).
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return(id).
+		Once()
+
+	mockOSLayer.EXPECT().
+		MkdirAll(logDir, os.FileMode(0o700)).
+		Return(nil).
+		Once()
+
+	// Act
+	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
+
+	// Assert
+	require.NoError(t, err, "New should not return an error")
+	assert.NotNil(t, directoryInstance, "Directory instance should not be nil")
 }
 
 func TestDirectory_BaseDir_HappyPath(t *testing.T) {
@@ -133,23 +219,30 @@ func TestDirectory_BaseDir_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-67890"
+	logDir := filepath.Join("tmp", "matlab-mcp-core-server-67890")
+	expectedMarkerBaseName := filepath.Join(logDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	markerFileName := filepath.Join(logDir, ".matlab-mcp-core-server")
+	suffix := "123"
 
 	mockConfig.EXPECT().
 		BaseDir().
 		Return("").
 		Once()
 
-	mockOSLayer.EXPECT().
-		MkdirTemp("", directory.DefaultLogDirPattern).
-		Return(expectedLogDir, nil).
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
+	mockOSLayer.EXPECT().
+		MkdirTemp("", directory.DefaultLogDirPattern).
+		Return(logDir, nil).
+		Once()
+
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
-		Return(expectedMarkerFileName, expectedSuffix, nil).
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
+		Return(markerFileName, suffix, nil).
 		Once()
 
 	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
@@ -159,7 +252,7 @@ func TestDirectory_BaseDir_HappyPath(t *testing.T) {
 	baseDir := directoryInstance.BaseDir()
 
 	// Assert
-	assert.Equal(t, expectedLogDir, baseDir, "BaseDir should return the expected log directory")
+	assert.Equal(t, logDir, baseDir, "BaseDir should return the expected log directory")
 }
 
 func TestDirectory_BaseDir_SuppliedBaseDir_HappyPath(t *testing.T) {
@@ -176,11 +269,20 @@ func TestDirectory_BaseDir_SuppliedBaseDir_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/logs"
+	expectedLogDir := filepath.Join("logs")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	markerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	suffix := "123"
 
 	mockConfig.EXPECT().
 		BaseDir().
 		Return(expectedLogDir).
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
 		Once()
 
 	mockOSLayer.EXPECT().
@@ -188,11 +290,9 @@ func TestDirectory_BaseDir_SuppliedBaseDir_HappyPath(t *testing.T) {
 		Return(nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
-		Return(expectedMarkerFileName, expectedSuffix, nil).
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
+		Return(markerFileName, suffix, nil).
 		Once()
 
 	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
@@ -219,10 +319,19 @@ func TestDirectory_ID_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-12345"
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-12345")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	markerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	suffix := "123"
 
 	mockConfig.EXPECT().
 		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
 		Return("").
 		Once()
 
@@ -231,11 +340,9 @@ func TestDirectory_ID_HappyPath(t *testing.T) {
 		Return(expectedLogDir, nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
-		Return(expectedMarkerFileName, expectedSuffix, nil).
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
+		Return(markerFileName, suffix, nil).
 		Once()
 
 	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
@@ -246,10 +353,10 @@ func TestDirectory_ID_HappyPath(t *testing.T) {
 
 	// Assert
 	require.NoError(t, err, "ID should not return an error")
-	assert.Equal(t, expectedSuffix, id, "ID should return the expected ID")
+	assert.Equal(t, suffix, id, "ID should return the expected ID")
 }
 
-func TestDirectory_MkdirTemp_HappyPath(t *testing.T) {
+func TestDirectory_ID_SuppliedID_HappyPath(t *testing.T) {
 	// Arrange
 	mockConfig := &directorymocks.MockConfig{}
 	defer mockConfig.AssertExpectations(t)
@@ -263,64 +370,65 @@ func TestDirectory_MkdirTemp_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-11111"
+	expectedID := "65898"
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-12345")
+
+	mockConfig.EXPECT().
+		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return(expectedID).
+		Once()
+
+	mockOSLayer.EXPECT().
+		MkdirTemp("", directory.DefaultLogDirPattern).
+		Return(expectedLogDir, nil).
+		Once()
+
+	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
+	require.NoError(t, err)
+
+	// Act
+	id := directoryInstance.ID()
+
+	// Assert
+	require.NoError(t, err, "ID should not return an error")
+	assert.Equal(t, expectedID, id, "ID should return the expected ID")
+}
+
+func TestDirectory_CreateSubDir_HappyPath(t *testing.T) {
+	// Arrange
+	mockConfig := &directorymocks.MockConfig{}
+	defer mockConfig.AssertExpectations(t)
+
+	mockFileNameFactory := &directorymocks.MockFilenameFactory{}
+	defer mockFileNameFactory.AssertExpectations(t)
+
+	mockOSLayer := &directorymocks.MockOSLayer{}
+	defer mockOSLayer.AssertExpectations(t)
+
+	mockMarkerFile := &osfacademocks.MockFile{}
+	defer mockMarkerFile.AssertExpectations(t)
+
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-11111")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
 	pattern := "test-pattern-"
-	expectedTempDir := "/tmp/matlab-mcp-core-server-11111/test-pattern-22222"
-
-	mockConfig.EXPECT().
-		BaseDir().
-		Return("").
-		Once()
-
-	mockOSLayer.EXPECT().
-		MkdirTemp("", directory.DefaultLogDirPattern).
-		Return(expectedLogDir, nil).
-		Once()
-
+	expectedTempDir := filepath.Join("tmp", "matlab-mcp-core-server-11111", "test-pattern-22222")
 	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
 	expectedSuffix := "123"
-	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
-		Return(expectedMarkerFileName, expectedSuffix, nil).
-		Once()
-
 	expectedPattern := pattern + expectedSuffix + "-"
-	mockOSLayer.EXPECT().
-		MkdirTemp(expectedLogDir, expectedPattern).
-		Return(expectedTempDir, nil).
-		Once()
-
-	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
-	require.NoError(t, err)
-
-	// Act
-	tempDir, err := directoryInstance.CreateSubDir(pattern)
-
-	// Assert
-	require.NoError(t, err, "MkdirTemp should not return an error")
-	assert.Equal(t, expectedTempDir, tempDir, "MkdirTemp should return the expected temp directory")
-}
-
-func TestDirectory_MkdirTemp_EnforcesDashSuffix(t *testing.T) {
-	// Arrange
-	mockConfig := &directorymocks.MockConfig{}
-	defer mockConfig.AssertExpectations(t)
-
-	mockFileNameFactory := &directorymocks.MockFilenameFactory{}
-	defer mockFileNameFactory.AssertExpectations(t)
-
-	mockOSLayer := &directorymocks.MockOSLayer{}
-	defer mockOSLayer.AssertExpectations(t)
-
-	mockMarkerFile := &osfacademocks.MockFile{}
-	defer mockMarkerFile.AssertExpectations(t)
-
-	expectedLogDir := "/tmp/matlab-mcp-core-server-11111"
-	pattern := "test-pattern"
-	expectedTempDir := "/tmp/matlab-mcp-core-server-11111/test-pattern-22222"
 
 	mockConfig.EXPECT().
 		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
 		Return("").
 		Once()
 
@@ -329,14 +437,11 @@ func TestDirectory_MkdirTemp_EnforcesDashSuffix(t *testing.T) {
 		Return(expectedLogDir, nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
 		Return(expectedMarkerFileName, expectedSuffix, nil).
 		Once()
 
-	expectedPattern := pattern + "-" + expectedSuffix + "-"
 	mockOSLayer.EXPECT().
 		MkdirTemp(expectedLogDir, expectedPattern).
 		Return(expectedTempDir, nil).
@@ -353,7 +458,7 @@ func TestDirectory_MkdirTemp_EnforcesDashSuffix(t *testing.T) {
 	assert.Equal(t, expectedTempDir, tempDir, "MkdirTemp should return the expected temp directory")
 }
 
-func TestDirectory_MkdirTemp_MkdirTempError(t *testing.T) {
+func TestDirectory_CreateSubDir_EnforcesDashSuffix(t *testing.T) {
 	// Arrange
 	mockConfig := &directorymocks.MockConfig{}
 	defer mockConfig.AssertExpectations(t)
@@ -367,12 +472,81 @@ func TestDirectory_MkdirTemp_MkdirTempError(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-33333"
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-11111")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	pattern := "test-pattern"
+	expectedTempDir := filepath.Join("tmp", "matlab-mcp-core-server-11111", "test-pattern-22222")
+	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	expectedSuffix := "123"
+	expectedPattern := pattern + "-" + expectedSuffix + "-"
+
+	mockConfig.EXPECT().
+		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
+		Once()
+
+	mockOSLayer.EXPECT().
+		MkdirTemp("", directory.DefaultLogDirPattern).
+		Return(expectedLogDir, nil).
+		Once()
+
+	mockFileNameFactory.EXPECT().
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
+		Return(expectedMarkerFileName, expectedSuffix, nil).
+		Once()
+
+	mockOSLayer.EXPECT().
+		MkdirTemp(expectedLogDir, expectedPattern).
+		Return(expectedTempDir, nil).
+		Once()
+
+	directoryInstance, err := directory.New(mockConfig, mockFileNameFactory, mockOSLayer)
+	require.NoError(t, err)
+
+	// Act
+	tempDir, err := directoryInstance.CreateSubDir(pattern)
+
+	// Assert
+	require.NoError(t, err, "MkdirTemp should not return an error")
+	assert.Equal(t, expectedTempDir, tempDir, "MkdirTemp should return the expected temp directory")
+}
+
+func TestDirectory_CreateSubDir_MkdirTempError(t *testing.T) {
+	// Arrange
+	mockConfig := &directorymocks.MockConfig{}
+	defer mockConfig.AssertExpectations(t)
+
+	mockFileNameFactory := &directorymocks.MockFilenameFactory{}
+	defer mockFileNameFactory.AssertExpectations(t)
+
+	mockOSLayer := &directorymocks.MockOSLayer{}
+	defer mockOSLayer.AssertExpectations(t)
+
+	mockMarkerFile := &osfacademocks.MockFile{}
+	defer mockMarkerFile.AssertExpectations(t)
+
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-33333")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
 	pattern := "test-pattern-"
 	expectedError := assert.AnError
+	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	expectedSuffix := "123"
+	expectedPattern := pattern + expectedSuffix + "-"
 
 	mockConfig.EXPECT().
 		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
 		Return("").
 		Once()
 
@@ -381,14 +555,11 @@ func TestDirectory_MkdirTemp_MkdirTempError(t *testing.T) {
 		Return(expectedLogDir, nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
 		Return(expectedMarkerFileName, expectedSuffix, nil).
 		Once()
 
-	expectedPattern := pattern + expectedSuffix + "-"
 	mockOSLayer.EXPECT().
 		MkdirTemp(expectedLogDir, expectedPattern).
 		Return("", expectedError).
@@ -405,7 +576,7 @@ func TestDirectory_MkdirTemp_MkdirTempError(t *testing.T) {
 	assert.Empty(t, tempDir, "MkdirTemp should return empty string when error occurs")
 }
 
-func TestDirectory_MkdirTemp_SuppliedBaseDir_HappyPath(t *testing.T) {
+func TestDirectory_CreateSubDir_SuppliedBaseDir_HappyPath(t *testing.T) {
 	// Arrange
 	mockConfig := &directorymocks.MockConfig{}
 	defer mockConfig.AssertExpectations(t)
@@ -419,13 +590,23 @@ func TestDirectory_MkdirTemp_SuppliedBaseDir_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/logs"
+	expectedLogDir := filepath.Join("logs")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
 	pattern := "test-pattern-"
-	expectedTempDir := "/logs/test-pattern-22222"
+	expectedTempDir := filepath.Join("logs", "test-pattern-22222")
+	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	expectedSuffix := "123"
+	expectedPattern := pattern + expectedSuffix + "-"
 
 	mockConfig.EXPECT().
 		BaseDir().
 		Return(expectedLogDir).
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
+		Return("").
 		Once()
 
 	mockOSLayer.EXPECT().
@@ -433,14 +614,11 @@ func TestDirectory_MkdirTemp_SuppliedBaseDir_HappyPath(t *testing.T) {
 		Return(nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
 		Return(expectedMarkerFileName, expectedSuffix, nil).
 		Once()
 
-	expectedPattern := pattern + expectedSuffix + "-"
 	mockOSLayer.EXPECT().
 		MkdirTemp(expectedLogDir, expectedPattern).
 		Return(expectedTempDir, nil).
@@ -471,10 +649,19 @@ func TestDirectory_RecordToLogger_HappyPath(t *testing.T) {
 	mockMarkerFile := &osfacademocks.MockFile{}
 	defer mockMarkerFile.AssertExpectations(t)
 
-	expectedLogDir := "/tmp/matlab-mcp-core-server-33333"
+	expectedLogDir := filepath.Join("tmp", "matlab-mcp-core-server-33333")
+	expectedMarkerBaseName := filepath.Join(expectedLogDir, directory.MarkerFileName)
+	expectedMarkerExtension := ""
+	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
+	expectedSuffix := "123"
 
 	mockConfig.EXPECT().
 		BaseDir().
+		Return("").
+		Once()
+
+	mockConfig.EXPECT().
+		ServerInstanceID().
 		Return("").
 		Once()
 
@@ -483,10 +670,8 @@ func TestDirectory_RecordToLogger_HappyPath(t *testing.T) {
 		Return(expectedLogDir, nil).
 		Once()
 
-	expectedMarkerFileName := filepath.Join(expectedLogDir, ".matlab-mcp-core-server")
-	expectedSuffix := "123"
 	mockFileNameFactory.EXPECT().
-		CreateFileWithUniqueSuffix(filepath.Join(expectedLogDir, directory.MarkerFileName), "").
+		CreateFileWithUniqueSuffix(expectedMarkerBaseName, expectedMarkerExtension).
 		Return(expectedMarkerFileName, expectedSuffix, nil).
 		Once()
 
@@ -508,4 +693,8 @@ func TestDirectory_RecordToLogger_HappyPath(t *testing.T) {
 	actualValue, exists := fields["log-dir"]
 	require.True(t, exists, "log-dir field not found in log")
 	assert.Equal(t, expectedLogDir, actualValue, "log-dir field has incorrect value")
+
+	actualValue, exists = fields["id"]
+	require.True(t, exists, "id field not found in log")
+	assert.Equal(t, expectedSuffix, actualValue, "id field has incorrect value")
 }

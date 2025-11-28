@@ -41,6 +41,11 @@ func TestNewFactory_HappyPath(t *testing.T) {
 				Return(logLevel).
 				Once()
 
+			mockConfig.EXPECT().
+				WatchdogMode().
+				Return(false).
+				Once()
+
 			expectedBaseDir := "/some/directory"
 			mockDirectory.EXPECT().
 				BaseDir().
@@ -54,7 +59,6 @@ func TestNewFactory_HappyPath(t *testing.T) {
 				Once()
 
 			expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-			expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
 			mockFilenameFactory.EXPECT().
 				FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
 				Return(expectedLogFile).
@@ -64,17 +68,6 @@ func TestNewFactory_HappyPath(t *testing.T) {
 			mockOSLayer.EXPECT().
 				Create(expectedLogFile).
 				Return(mockLogFile, nil).
-				Once()
-
-			mockFilenameFactory.EXPECT().
-				FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-				Return(expectedWatchdogLogFile).
-				Once()
-
-			mockWatchdogLogFile := &osfacademocks.MockFile{}
-			mockOSLayer.EXPECT().
-				Create(expectedWatchdogLogFile).
-				Return(mockWatchdogLogFile, nil).
 				Once()
 
 			// Act
@@ -106,55 +99,9 @@ func TestNewFactory_LogFileCreateError(t *testing.T) {
 		Return("info").
 		Once()
 
-	expectedBaseDir := "/some/directory"
-	mockDirectory.EXPECT().
-		BaseDir().
-		Return(expectedBaseDir).
-		Once()
-
-	expectedSuffix := "123"
-	mockDirectory.EXPECT().
-		ID().
-		Return(expectedSuffix).
-		Once()
-
-	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedLogFile).
-		Once()
-
-	expectedError := assert.AnError
-	mockOSLayer.EXPECT().
-		Create(expectedLogFile).
-		Return(nil, expectedError).
-		Once()
-
-	// Act
-	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
-
-	// Assert
-	require.ErrorIs(t, err, expectedError)
-	assert.Nil(t, factory, "Factory should not be nil")
-}
-
-func TestNewFactory_WatchdogLogFileCreateError(t *testing.T) {
-	// Arrange
-	mockConfig := &loggermocks.MockConfig{}
-	defer mockConfig.AssertExpectations(t)
-
-	mockDirectory := &loggermocks.MockDirectory{}
-	defer mockDirectory.AssertExpectations(t)
-
-	mockFilenameFactory := &loggermocks.MockFilenameFactory{}
-	defer mockFilenameFactory.AssertExpectations(t)
-
-	mockOSLayer := &loggermocks.MockOSLayer{}
-	defer mockOSLayer.AssertExpectations(t)
-
 	mockConfig.EXPECT().
-		LogLevel().
-		Return("info").
+		WatchdogMode().
+		Return(false).
 		Once()
 
 	expectedBaseDir := "/some/directory"
@@ -170,26 +117,14 @@ func TestNewFactory_WatchdogLogFileCreateError(t *testing.T) {
 		Once()
 
 	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
 	mockFilenameFactory.EXPECT().
 		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
 		Return(expectedLogFile).
 		Once()
 
-	mockLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedLogFile).
-		Return(mockLogFile, nil).
-		Once()
-
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
-		Once()
-
 	expectedError := assert.AnError
 	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
+		Create(expectedLogFile).
 		Return(nil, expectedError).
 		Once()
 
@@ -200,7 +135,6 @@ func TestNewFactory_WatchdogLogFileCreateError(t *testing.T) {
 	require.ErrorIs(t, err, expectedError)
 	assert.Nil(t, factory, "Factory should not be nil")
 }
-
 func TestNewFactory_InvalidLogLevel(t *testing.T) {
 	// Arrange
 	mockConfig := &loggermocks.MockConfig{}
@@ -248,6 +182,11 @@ func TestFactory_NewMCPSessionLogger_HappyPath(t *testing.T) {
 		Return("info").
 		Once()
 
+	mockConfig.EXPECT().
+		WatchdogMode().
+		Return(false).
+		Once()
+
 	expectedBaseDir := "/some/directory"
 	mockDirectory.EXPECT().
 		BaseDir().
@@ -261,7 +200,6 @@ func TestFactory_NewMCPSessionLogger_HappyPath(t *testing.T) {
 		Once()
 
 	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
 	mockFilenameFactory.EXPECT().
 		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
 		Return(expectedLogFile).
@@ -271,17 +209,6 @@ func TestFactory_NewMCPSessionLogger_HappyPath(t *testing.T) {
 	mockOSLayer.EXPECT().
 		Create(expectedLogFile).
 		Return(mockLogFile, nil).
-		Once()
-
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
-		Once()
-
-	mockWatchdogLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
-		Return(mockWatchdogLogFile, nil).
 		Once()
 
 	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
@@ -313,6 +240,11 @@ func TestFactory_GetGlobalLogger_HappyPath(t *testing.T) {
 		Return("debug").
 		Once()
 
+	mockConfig.EXPECT().
+		WatchdogMode().
+		Return(false).
+		Once()
+
 	expectedBaseDir := "/some/directory"
 	mockDirectory.EXPECT().
 		BaseDir().
@@ -326,7 +258,6 @@ func TestFactory_GetGlobalLogger_HappyPath(t *testing.T) {
 		Once()
 
 	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
 	mockFilenameFactory.EXPECT().
 		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
 		Return(expectedLogFile).
@@ -338,15 +269,62 @@ func TestFactory_GetGlobalLogger_HappyPath(t *testing.T) {
 		Return(mockLogFile, nil).
 		Once()
 
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
+	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
+	require.NoError(t, err, "Factory creation should not fail")
+
+	// Act
+	logger := factory.GetGlobalLogger()
+
+	// Assert
+	assert.NotNil(t, logger, "Global logger should not be nil")
+}
+
+func TestFactory_GetGlobalLogger_UsesWatchdogLogFileInWatchdogMode(t *testing.T) {
+	// Arrange
+	mockConfig := &loggermocks.MockConfig{}
+	defer mockConfig.AssertExpectations(t)
+
+	mockDirectory := &loggermocks.MockDirectory{}
+	defer mockDirectory.AssertExpectations(t)
+
+	mockFilenameFactory := &loggermocks.MockFilenameFactory{}
+	defer mockFilenameFactory.AssertExpectations(t)
+
+	mockOSLayer := &loggermocks.MockOSLayer{}
+	defer mockOSLayer.AssertExpectations(t)
+
+	mockConfig.EXPECT().
+		LogLevel().
+		Return("debug").
 		Once()
 
-	mockWatchdogLogFile := &osfacademocks.MockFile{}
+	mockConfig.EXPECT().
+		WatchdogMode().
+		Return(true).
+		Once()
+
+	expectedBaseDir := "/some/directory"
+	mockDirectory.EXPECT().
+		BaseDir().
+		Return(expectedBaseDir).
+		Once()
+
+	expectedSuffix := "123"
+	mockDirectory.EXPECT().
+		ID().
+		Return(expectedSuffix).
+		Once()
+
+	expectedLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
+	mockFilenameFactory.EXPECT().
+		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
+		Return(expectedLogFile).
+		Once()
+
+	mockLogFile := &osfacademocks.MockFile{}
 	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
-		Return(mockWatchdogLogFile, nil).
+		Create(expectedLogFile).
+		Return(mockLogFile, nil).
 		Once()
 
 	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
@@ -378,6 +356,11 @@ func TestFactory_GetGlobalLogger_IsSingleton(t *testing.T) {
 		Return("warn").
 		Once()
 
+	mockConfig.EXPECT().
+		WatchdogMode().
+		Return(false).
+		Once()
+
 	expectedBaseDir := "/some/directory"
 	mockDirectory.EXPECT().
 		BaseDir().
@@ -391,7 +374,6 @@ func TestFactory_GetGlobalLogger_IsSingleton(t *testing.T) {
 		Once()
 
 	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
 	mockFilenameFactory.EXPECT().
 		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
 		Return(expectedLogFile).
@@ -401,17 +383,6 @@ func TestFactory_GetGlobalLogger_IsSingleton(t *testing.T) {
 	mockOSLayer.EXPECT().
 		Create(expectedLogFile).
 		Return(mockLogFile, nil).
-		Once()
-
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
-		Once()
-
-	mockWatchdogLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
-		Return(mockWatchdogLogFile, nil).
 		Once()
 
 	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
@@ -425,137 +396,4 @@ func TestFactory_GetGlobalLogger_IsSingleton(t *testing.T) {
 	assert.NotNil(t, logger1, "First global logger should not be nil")
 	assert.NotNil(t, logger2, "Second global logger should not be nil")
 	assert.Same(t, logger1, logger2, "Global logger should be a singleton")
-}
-
-func TestFactory_GetWatchdogLogger_HappyPath(t *testing.T) {
-	// Arrange
-	mockConfig := &loggermocks.MockConfig{}
-	defer mockConfig.AssertExpectations(t)
-
-	mockDirectory := &loggermocks.MockDirectory{}
-	defer mockDirectory.AssertExpectations(t)
-
-	mockFilenameFactory := &loggermocks.MockFilenameFactory{}
-	defer mockFilenameFactory.AssertExpectations(t)
-
-	mockOSLayer := &loggermocks.MockOSLayer{}
-	defer mockOSLayer.AssertExpectations(t)
-
-	mockConfig.EXPECT().
-		LogLevel().
-		Return("debug").
-		Once()
-
-	expectedBaseDir := "/some/directory"
-	mockDirectory.EXPECT().
-		BaseDir().
-		Return(expectedBaseDir).
-		Once()
-
-	expectedSuffix := "123"
-	mockDirectory.EXPECT().
-		ID().
-		Return(expectedSuffix).
-		Once()
-
-	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedLogFile).
-		Once()
-
-	mockLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedLogFile).
-		Return(mockLogFile, nil).
-		Once()
-
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
-		Once()
-
-	mockWatchdogLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
-		Return(mockWatchdogLogFile, nil).
-		Once()
-
-	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
-	require.NoError(t, err, "Factory creation should not fail")
-
-	// Act
-	logger := factory.GetWatchdogLogger()
-
-	// Assert
-	assert.NotNil(t, logger, "Watchdog logger should not be nil")
-}
-
-func TestFactory_GetWatchdogLogger_IsSingleton(t *testing.T) {
-	// Arrange
-	mockConfig := &loggermocks.MockConfig{}
-	defer mockConfig.AssertExpectations(t)
-
-	mockDirectory := &loggermocks.MockDirectory{}
-	defer mockDirectory.AssertExpectations(t)
-
-	mockFilenameFactory := &loggermocks.MockFilenameFactory{}
-	defer mockFilenameFactory.AssertExpectations(t)
-
-	mockOSLayer := &loggermocks.MockOSLayer{}
-	defer mockOSLayer.AssertExpectations(t)
-
-	mockConfig.EXPECT().
-		LogLevel().
-		Return("warn").
-		Once()
-
-	expectedBaseDir := "/some/directory"
-	mockDirectory.EXPECT().
-		BaseDir().
-		Return(expectedBaseDir).
-		Once()
-
-	expectedSuffix := "123"
-	mockDirectory.EXPECT().
-		ID().
-		Return(expectedSuffix).
-		Once()
-
-	expectedLogFile := filepath.Join(expectedBaseDir, "server.log")
-	expectedWatchdogLogFile := filepath.Join(expectedBaseDir, "watchdog.log")
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.LogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedLogFile).
-		Once()
-
-	mockLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedLogFile).
-		Return(mockLogFile, nil).
-		Once()
-
-	mockFilenameFactory.EXPECT().
-		FilenameWithSuffix(filepath.Join(expectedBaseDir, logger.WatchdogLogFileName), logger.LogFileExt, expectedSuffix).
-		Return(expectedWatchdogLogFile).
-		Once()
-
-	mockWatchdogLogFile := &osfacademocks.MockFile{}
-	mockOSLayer.EXPECT().
-		Create(expectedWatchdogLogFile).
-		Return(mockWatchdogLogFile, nil).
-		Once()
-
-	factory, err := logger.NewFactory(mockConfig, mockDirectory, mockFilenameFactory, mockOSLayer)
-	require.NoError(t, err, "Factory creation should not fail")
-
-	// Act
-	logger1 := factory.GetWatchdogLogger()
-	logger2 := factory.GetWatchdogLogger()
-
-	// Assert
-	assert.NotNil(t, logger1, "First watchdog logger should not be nil")
-	assert.NotNil(t, logger2, "Second watchdog logger should not be nil")
-	assert.Same(t, logger1, logger2, "Watchdog logger should be a singleton")
 }

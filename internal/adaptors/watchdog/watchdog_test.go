@@ -18,7 +18,6 @@ import (
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -32,11 +31,6 @@ func TestNew_HappyPath(t *testing.T) {
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	// Act
@@ -53,7 +47,6 @@ func TestNew_HappyPath(t *testing.T) {
 func TestWatchdog_Start_HappyPath(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -70,19 +63,9 @@ func TestWatchdog_Start_HappyPath(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
-
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -93,28 +76,6 @@ func TestWatchdog_Start_HappyPath(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -138,7 +99,6 @@ func TestWatchdog_Start_HappyPath(t *testing.T) {
 func TestWatchdog_Start_TransportFactoryError(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -157,11 +117,6 @@ func TestWatchdog_Start_TransportFactoryError(t *testing.T) {
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -190,7 +145,6 @@ func TestWatchdog_Start_TransportFactoryError(t *testing.T) {
 func TestWatchdog_Start_WatchdogProcessStartError(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -207,20 +161,11 @@ func TestWatchdog_Start_WatchdogProcessStartError(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -231,28 +176,6 @@ func TestWatchdog_Start_WatchdogProcessStartError(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -276,7 +199,6 @@ func TestWatchdog_Start_WatchdogProcessStartError(t *testing.T) {
 func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -293,20 +215,11 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
 	testPID := 12345
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -317,28 +230,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -371,7 +262,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -388,20 +278,11 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
 	testPID := 12345
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -412,28 +293,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -475,7 +334,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -492,21 +350,12 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
 	testPID := 12345
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -517,28 +366,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -571,7 +398,6 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 func TestWatchdog_Stop_HappyPath(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -588,19 +414,9 @@ func TestWatchdog_Stop_HappyPath(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
-
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -611,28 +427,6 @@ func TestWatchdog_Stop_HappyPath(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -664,7 +458,6 @@ func TestWatchdog_Stop_HappyPath(t *testing.T) {
 func TestWatchdog_Stop_StopErrors(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -681,21 +474,11 @@ func TestWatchdog_Stop_StopErrors(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
-
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -706,28 +489,6 @@ func TestWatchdog_Stop_StopErrors(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -759,7 +520,6 @@ func TestWatchdog_Stop_StopErrors(t *testing.T) {
 func TestWatchdog_Stop_WaitsIfNotStarted(t *testing.T) {
 	// Arrange
 	mockLogger := testutils.NewInspectableLogger()
-	mockWatchdogLogger := testutils.NewInspectableLogger()
 
 	mockWatchdogProcess := &watchdogmocks.MockWatchdogProcess{}
 	defer mockWatchdogProcess.AssertExpectations(t)
@@ -776,19 +536,9 @@ func TestWatchdog_Stop_WaitsIfNotStarted(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	debugMessageC := make(chan string)
-	defer close(debugMessageC)
-	errorMessageC := make(chan string)
-	defer close(errorMessageC)
-
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
-		Once()
-
-	mockLoggerFactory.EXPECT().
-		GetWatchdogLogger().
-		Return(mockWatchdogLogger).
 		Once()
 
 	mockWatchdogProcess.EXPECT().
@@ -799,28 +549,6 @@ func TestWatchdog_Stop_WaitsIfNotStarted(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewClient(mockSubProcessStdio).
 		Return(mockTransportClient, nil).
-		Once()
-
-	blockUntilDebugMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilDebugMessagesCIsRetrieved
-	}()
-
-	blockUntilErrorMessagesCIsRetrieved := make(chan struct{})
-	defer func() {
-		<-blockUntilErrorMessagesCIsRetrieved
-	}()
-
-	mockTransportClient.EXPECT().
-		DebugMessagesC().
-		Return(debugMessageC).
-		Run(func() { close(blockUntilDebugMessagesCIsRetrieved) }).
-		Once()
-
-	mockTransportClient.EXPECT().
-		ErrorMessagesC().
-		Return(errorMessageC).
-		Run(func() { close(blockUntilErrorMessagesCIsRetrieved) }).
 		Once()
 
 	mockWatchdogProcess.EXPECT().

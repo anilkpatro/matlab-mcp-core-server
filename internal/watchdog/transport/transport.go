@@ -19,14 +19,9 @@ func (p Shutdown) seal() {}
 type Client interface {
 	SendProcessPID(processPID int) error
 	SendStop() error
-
-	DebugMessagesC() <-chan string
-	ErrorMessagesC() <-chan string
 }
 
 type Receiver interface {
-	SendDebugMessage(message string)
-	SendErrorMessage(message string)
 	SendGracefulShutdownCompleted() error
 
 	C() <-chan Message

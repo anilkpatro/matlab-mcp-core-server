@@ -5,70 +5,53 @@ package config
 import (
 	"fmt"
 
+	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/application/inputs/flags"
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
 	"github.com/spf13/pflag"
 )
 
-const (
-	versionMode             = "version"
-	versionModeDefaultValue = false
-
-	disableTelemetry             = "disable-telemetry"
-	disableTelemetryDefaultValue = false
-
-	useSingleMATLABSession             = "use-single-matlab-session"
-	useSingleMATLABSessionDefaultValue = true
-
-	preferredLocalMATLABRoot             = "matlab-root"
-	preferredLocalMATLABRootDefaultValue = ""
-
-	preferredMATLABStartingDirectory             = "initial-working-folder"
-	preferredMATLABStartingDirectoryDefaultValue = ""
-
-	baseDir             = "log-folder"
-	baseDirDefaultValue = ""
-
-	logLevel             = "log-level"
-	logLevelDefaultValue = "info"
-
-	watchdogMode             = "watchdog"
-	watchdogModeDefaultValue = false
-)
-
 func setupFlags(flagSet *pflag.FlagSet) error {
-	flagSet.Bool(versionMode, versionModeDefaultValue,
-		"Display the version of the MATLAB MCP Core Server.",
+	flagSet.Bool(flags.VersionMode, flags.VersionModeDefaultValue,
+		flags.VersionDescription,
 	)
 
-	flagSet.Bool(disableTelemetry, disableTelemetryDefaultValue,
-		"Disable collection of usage data. By default, this software may collect information about you and your usage and send it to MathWorks. This data helps us improve our products and services.",
+	flagSet.Bool(flags.DisableTelemetry, flags.DisableTelemetryDefaultValue,
+		flags.DisableTelemetryDescription,
 	)
 
-	flagSet.Bool(useSingleMATLABSession, useSingleMATLABSessionDefaultValue,
-		"When true, a MATLAB session is started when a MATLAB MCP Core Server starts, and stopped when the server is shut down. When false, the server can manage multiple MATLAB sessions.",
+	flagSet.Bool(flags.UseSingleMATLABSession, flags.UseSingleMATLABSessionDefaultValue,
+		flags.UseSingleMATLABSessionDescription,
 	)
 
-	flagSet.String(logLevel, logLevelDefaultValue,
-		"The log level to use for the global logger (for session logs, the clients sets the log level). Valid values are: debug, info, warn, error.",
+	flagSet.String(flags.LogLevel, flags.LogLevelDefaultValue,
+		flags.LogLevelDescription,
 	)
 
-	flagSet.String(preferredLocalMATLABRoot, preferredLocalMATLABRootDefaultValue,
-		fmt.Sprintf("When %s is true, if this is set, defines which local MATLAB installation to use. If not set, the first MATLAB installation on the PATH will be used.", useSingleMATLABSession),
+	flagSet.String(flags.PreferredLocalMATLABRoot, flags.PreferredLocalMATLABRootDefaultValue,
+		fmt.Sprintf("When %s is true, if this is set, defines which local MATLAB installation to use. If not set, the first MATLAB installation on the PATH will be used.", flags.UseSingleMATLABSession),
 	)
 
-	flagSet.String(preferredMATLABStartingDirectory, preferredMATLABStartingDirectoryDefaultValue,
-		fmt.Sprintf("When %s is true, if this is set, defines which startup folder MATLAB will use. If not set, MATLAB will use the default MATLAB's startup folder.", useSingleMATLABSession),
+	flagSet.String(flags.PreferredMATLABStartingDirectory, flags.PreferredMATLABStartingDirectoryDefaultValue,
+		fmt.Sprintf("When %s is true, if this is set, defines which startup folder MATLAB will use. If not set, MATLAB will use the default MATLAB's startup folder.", flags.UseSingleMATLABSession),
 	)
 
-	flagSet.String(baseDir, baseDirDefaultValue,
-		"The folder where log files will be stored. If not set, logs will be stored in a unique folder in the OS temp folder.",
+	flagSet.String(flags.BaseDir, flags.BaseDirDefaultValue,
+		flags.BaseDirDescription,
 	)
 
 	// Hidden flags, for internal use only
-	flagSet.Bool(watchdogMode, watchdogModeDefaultValue,
-		"INTERNAL USE ONLY.",
+	flagSet.Bool(flags.WatchdogMode, flags.WatchdogModeDefaultValue,
+		flags.WatchdogModeDescription,
 	)
-	err := flagSet.MarkHidden(watchdogMode)
+	err := flagSet.MarkHidden(flags.WatchdogMode)
+	if err != nil {
+		return err
+	}
+
+	flagSet.String(flags.ServerInstanceID, flags.ServerInstanceIDDefaultValue,
+		flags.ServerInstanceIDDescription,
+	)
+	err = flagSet.MarkHidden(flags.ServerInstanceID)
 	if err != nil {
 		return err
 	}
@@ -82,22 +65,22 @@ func createConfigWithFlagValues(osLayer OSLayer, flagSet *pflag.FlagSet, args []
 		return nil, err
 	}
 
-	versionMode, err := flagSet.GetBool(versionMode)
+	versionMode, err := flagSet.GetBool(flags.VersionMode)
 	if err != nil {
 		return nil, err
 	}
 
-	disableTelemetry, err := flagSet.GetBool(disableTelemetry)
+	disableTelemetry, err := flagSet.GetBool(flags.DisableTelemetry)
 	if err != nil {
 		return nil, err
 	}
 
-	useSingleMATLABSession, err := flagSet.GetBool(useSingleMATLABSession)
+	useSingleMATLABSession, err := flagSet.GetBool(flags.UseSingleMATLABSession)
 	if err != nil {
 		return nil, err
 	}
 
-	logLevel, err := flagSet.GetString(logLevel)
+	logLevel, err := flagSet.GetString(flags.LogLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -109,22 +92,27 @@ func createConfigWithFlagValues(osLayer OSLayer, flagSet *pflag.FlagSet, args []
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)
 	}
 
-	preferredLocalMATLABRoot, err := flagSet.GetString(preferredLocalMATLABRoot)
+	preferredLocalMATLABRoot, err := flagSet.GetString(flags.PreferredLocalMATLABRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	preferredMATLABStartingDirectory, err := flagSet.GetString(preferredMATLABStartingDirectory)
+	preferredMATLABStartingDirectory, err := flagSet.GetString(flags.PreferredMATLABStartingDirectory)
 	if err != nil {
 		return nil, err
 	}
 
-	baseDir, err := flagSet.GetString(baseDir)
+	baseDir, err := flagSet.GetString(flags.BaseDir)
 	if err != nil {
 		return nil, err
 	}
 
-	watchdogMode, err := flagSet.GetBool(watchdogMode)
+	watchdogMode, err := flagSet.GetBool(flags.WatchdogMode)
+	if err != nil {
+		return nil, err
+	}
+
+	serverInstanceID, err := flagSet.GetString(flags.ServerInstanceID)
 	if err != nil {
 		return nil, err
 	}
@@ -140,5 +128,6 @@ func createConfigWithFlagValues(osLayer OSLayer, flagSet *pflag.FlagSet, args []
 		preferredMATLABStartingDirectory: preferredMATLABStartingDirectory,
 		baseDirectory:                    baseDir,
 		watchdogMode:                     watchdogMode,
+		serverInstanceID:                 serverInstanceID,
 	}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/matlab/matlab-mcp-core-server/internal/testutils"
 	"github.com/matlab/matlab-mcp-core-server/internal/utils/stdio"
 	"github.com/matlab/matlab-mcp-core-server/internal/watchdog"
 	"github.com/matlab/matlab-mcp-core-server/internal/watchdog/transport"
@@ -13,12 +14,16 @@ import (
 	mocks "github.com/matlab/matlab-mcp-core-server/mocks/watchdog"
 	transportmocks "github.com/matlab/matlab-mcp-core-server/mocks/watchdog/transport"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -31,8 +36,14 @@ func TestNew_HappyPath(t *testing.T) {
 	mockTransportFactory := &mocks.MockTransportFactory{}
 	defer mockTransportFactory.AssertExpectations(t)
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	// Act
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
@@ -45,6 +56,11 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -77,6 +93,11 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 	expectedPIDToKill := 123654
 	messageC := make(chan transport.Message)
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	mockOSLayer.EXPECT().
 		Stdin().
 		Return(mockStdin).
@@ -96,9 +117,6 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 		NewReceiver(stdio.NewOSStdio(mockStdin, mockStdout, mockStderr)).
 		Return(mockReceiver, nil).
 		Once()
-
-	mockReceiver.EXPECT().
-		SendDebugMessage(mock.AnythingOfType("string")) // Don't care what we log
 
 	mockOSLayer.EXPECT().
 		Getppid().
@@ -131,6 +149,7 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 		Once()
 
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
@@ -153,6 +172,11 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 
 func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -186,6 +210,11 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 	expectedSecondPIDToKill := 6587987
 	messageC := make(chan transport.Message)
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	mockOSLayer.EXPECT().
 		Stdin().
 		Return(mockStdin).
@@ -205,9 +234,6 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 		NewReceiver(stdio.NewOSStdio(mockStdin, mockStdout, mockStderr)).
 		Return(mockReceiver, nil).
 		Once()
-
-	mockReceiver.EXPECT().
-		SendDebugMessage(mock.AnythingOfType("string")) // Don't care what we log
 
 	mockOSLayer.EXPECT().
 		Getppid().
@@ -245,6 +271,7 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 		Once()
 
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
@@ -268,6 +295,11 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 
 func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -300,6 +332,11 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 	expectedPIDToKill := 123654
 	messageC := make(chan transport.Message)
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	mockOSLayer.EXPECT().
 		Stdin().
 		Return(mockStdin).
@@ -319,9 +356,6 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 		NewReceiver(stdio.NewOSStdio(mockStdin, mockStdout, mockStderr)).
 		Return(mockReceiver, nil).
 		Once()
-
-	mockReceiver.EXPECT().
-		SendDebugMessage(mock.AnythingOfType("string")) // Don't care what we log
 
 	mockOSLayer.EXPECT().
 		Getppid().
@@ -349,6 +383,7 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 		Once()
 
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
@@ -371,6 +406,11 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 
 func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -403,6 +443,11 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 	expectedPIDToKill := 123654
 	messageC := make(chan transport.Message)
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	mockOSLayer.EXPECT().
 		Stdin().
 		Return(mockStdin).
@@ -422,9 +467,6 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 		NewReceiver(stdio.NewOSStdio(mockStdin, mockStdout, mockStderr)).
 		Return(mockReceiver, nil).
 		Once()
-
-	mockReceiver.EXPECT().
-		SendDebugMessage(mock.AnythingOfType("string")) // Don't care what we log
 
 	mockOSLayer.EXPECT().
 		Getppid().
@@ -452,6 +494,7 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 		Once()
 
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
@@ -474,6 +517,11 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 
 func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 	// Arrange
+	mockLogger := testutils.NewInspectableLogger()
+
+	mockLoggerFactory := &mocks.MockLoggerFactory{}
+	defer mockLoggerFactory.AssertExpectations(t)
+
 	mockOSLayer := &mocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
@@ -509,6 +557,11 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 
 	expectedError := assert.AnError
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	mockOSLayer.EXPECT().
 		Stdin().
 		Return(mockStdin).
@@ -527,13 +580,6 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 	mockTransportFactory.EXPECT().
 		NewReceiver(stdio.NewOSStdio(mockStdin, mockStdout, mockStderr)).
 		Return(mockReceiver, nil).
-		Once()
-
-	mockReceiver.EXPECT().
-		SendDebugMessage(mock.AnythingOfType("string")) // Don't care what we log
-
-	mockReceiver.EXPECT().
-		SendErrorMessage(mock.AnythingOfType("string")).
 		Once()
 
 	mockOSLayer.EXPECT().
@@ -572,6 +618,7 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 		Once()
 
 	watchdogInstance := watchdog.New(
+		mockLoggerFactory,
 		mockOSLayer,
 		mockProcessHandler,
 		mockOSSignaler,
