@@ -14,7 +14,6 @@ Run MATLAB® using AI applications with the official MATLAB MCP Server from Math
   - [Arguments](#arguments)
   - [Tools](#tools)
   - [Data Collection](#data-collection)
-  - [Disclaimer](#disclaimer)
 
 ## Setup
 
@@ -136,9 +135,8 @@ Customize the behavior of the server by providing arguments in the `args` array 
 
 The MATLAB MCP Core Server may collect fully anonymized information about your usage of the server and send it to MathWorks. This data collection helps MathWorks improve products and is on by default. To opt out of data collection, set the argument `--disable-telemetry` to `true`.
 
-## Disclaimer
-
-The MATLAB MCP Core Server is provided "as is" without warranties of any kind, expressed or implied. By using this server, you acknowledge and accept that you are solely responsible for any actions taken and any consequences arising from its use. It is your responsibility to thoroughly review and validate all tool calls before execution. The developers and providers of this server disclaim any liability for loss, damage, or injury resulting from its use.
+# 
+When using the MATLAB MCP Core Server, you should thoroughly review and validate all tool calls before you run them. Always keep a human in the loop for important actions and only proceed once you are confident the call will do exactly what you expect. For more information, see [User Interaction Model (MCP)](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#user-interaction-model) and [Security Considerations (MCP)](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#security-considerations).
 
 ---
 
