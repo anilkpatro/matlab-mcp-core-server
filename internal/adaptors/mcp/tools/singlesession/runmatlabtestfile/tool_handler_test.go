@@ -18,8 +18,6 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
@@ -28,6 +26,8 @@ func TestNew_HappyPath(t *testing.T) {
 
 	mockGlobalMATLAB := &entitiesmocks.MockGlobalMATLAB{}
 	defer mockGlobalMATLAB.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -43,8 +43,6 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -54,12 +52,14 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const scriptPath = "/some/script/tofile/testFile.m"
 	expectedResponse := entities.EvalResponse{
 		ConsoleOutput: "Test Results",
 		Images:        [][]byte{[]byte("image1"), []byte("image2")},
 	}
+	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -75,8 +75,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 		).
 		Return(expectedResponse, nil).
 		Once()
-
-	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	// Act
 	result, err := runmatlabtestfile.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
@@ -94,8 +92,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -105,16 +101,16 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const scriptPath = "/some/path"
 	expectedError := assert.AnError
+	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
 		Return(nil, expectedError).
 		Once()
-
-	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	// Act
 	result, err := runmatlabtestfile.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
@@ -126,8 +122,6 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 
 func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -137,9 +131,11 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const scriptPath = "/invalid/path.m"
 	expectedError := assert.AnError
+	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -156,8 +152,6 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 		Return(entities.EvalResponse{}, expectedError).
 		Once()
 
-	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
-
 	// Act
 	result, err := runmatlabtestfile.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
@@ -168,8 +162,6 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 
 func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -179,6 +171,7 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const scriptPath = "/path/tomepty/testFile.m"
 
@@ -187,6 +180,7 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 		ConsoleOutput: "",
 		Images:        [][]byte{},
 	}
+	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -204,8 +198,6 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 		Once()
 
 	// Act
-	args := runmatlabtestfile.Args{ScriptPath: scriptPath}
-
 	result, err := runmatlabtestfile.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
 	// Assert

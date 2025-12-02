@@ -3,6 +3,8 @@
 package checkmatlabcode_test
 
 import (
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
@@ -40,11 +42,11 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
-	const validatedPath = "/validated/path/to/script.m"
+	validatedPath := filepath.Join("validated", "path", "to", "script.m")
 	const expectedCheckCodeOutput = "L 5 (C 1-10): Variable 'x' might be unused."
 
 	mockPathValidator.EXPECT().
@@ -82,11 +84,11 @@ func TestUsecase_Execute_HappyPath_OutputWithWhitespaceAndEmptyLines(t *testing.
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
-	const validatedPath = "/validated/path/to/script.m"
+	validatedPath := filepath.Join("validated", "path", "to", "script.m")
 	const expectedCheckCodeOutput = "  Line 1: Warning  \n\n  \n\nLine 3: Error\n   \n"
 	expectedCleanedOutput := []string{"Line 1: Warning", "Line 3: Error"}
 
@@ -125,11 +127,11 @@ func TestUsecase_Execute_HappyPath_EmptyOutput(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
-	const validatedPath = "/validated/path/to/script.m"
+	validatedPath := filepath.Join("validated", "path", "to", "script.m")
 	const expectedCheckCodeOutput = "No issues found by checkcode"
 
 	mockPathValidator.EXPECT().
@@ -167,11 +169,11 @@ func TestUsecase_Execute_HappyPath_PathWithSingleQuotes(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
-	const validatedPath = "/path/with'quote/script.m"
+	validatedPath := filepath.Join("path", "with'quote", "script.m")
 	const expectedCheckCodeOutput = "L 5 (C 1-10): Variable 'x' might be unused."
 
 	mockPathValidator.EXPECT().
@@ -180,7 +182,7 @@ func TestUsecase_Execute_HappyPath_PathWithSingleQuotes(t *testing.T) {
 		Once()
 
 	expectedEvalRequest := entities.EvalRequest{
-		Code: "checkcode('/path/with''quote/script.m')",
+		Code: "checkcode('" + strings.ReplaceAll(validatedPath, "'", "''") + "')",
 	}
 
 	mockClient.EXPECT().
@@ -209,7 +211,7 @@ func TestUsecase_Execute_PathValidationError(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
@@ -241,11 +243,11 @@ func TestUsecase_Execute_EvalWithCaptureError(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	checkcodeRequest := checkmatlabcode.Args{
-		ScriptPath: "/path/to/script.m",
+		ScriptPath: filepath.Join("path", "to", "script.m"),
 	}
 
 	ctx := t.Context()
-	const validatedPath = "/validated/path/to/script.m"
+	validatedPath := filepath.Join("validated", "path", "to", "script.m")
 	expectedError := assert.AnError
 
 	mockPathValidator.EXPECT().
@@ -254,7 +256,7 @@ func TestUsecase_Execute_EvalWithCaptureError(t *testing.T) {
 		Once()
 
 	expectedEvalRequest := entities.EvalRequest{
-		Code: "checkcode('/validated/path/to/script.m')",
+		Code: "checkcode('" + validatedPath + "')",
 	}
 
 	mockClient.EXPECT().

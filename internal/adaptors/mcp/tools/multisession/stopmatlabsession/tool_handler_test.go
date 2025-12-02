@@ -16,13 +16,13 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -38,21 +38,20 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const sessionID = 3
+	args := stopmatlabsession.Args{
+		SessionID: sessionID,
+	}
+
 	mockUsecase.EXPECT().
 		Execute(ctx, mockLogger.AsMockArg(), entities.SessionID(sessionID)).
 		Return(nil).
 		Once()
-
-	args := stopmatlabsession.Args{
-		SessionID: sessionID,
-	}
 
 	// Act
 	result, err := stopmatlabsession.Handler(mockUsecase)(ctx, mockLogger, args)
@@ -64,22 +63,21 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const sessionID = 3
 	expectedError := assert.AnError
+	args := stopmatlabsession.Args{
+		SessionID: sessionID,
+	}
+
 	mockUsecase.EXPECT().
 		Execute(ctx, mockLogger.AsMockArg(), entities.SessionID(sessionID)).
 		Return(expectedError).
 		Once()
-
-	args := stopmatlabsession.Args{
-		SessionID: sessionID,
-	}
 
 	// Act
 	result, err := stopmatlabsession.Handler(mockUsecase)(ctx, mockLogger, args)

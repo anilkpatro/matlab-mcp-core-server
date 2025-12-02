@@ -17,8 +17,6 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
@@ -27,6 +25,8 @@ func TestNew_HappyPath(t *testing.T) {
 
 	mockGlobalMATLAB := &entitiesmocks.MockGlobalMATLAB{}
 	defer mockGlobalMATLAB.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -42,8 +42,6 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -53,10 +51,12 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	expectedResponse := detectmatlabtoolboxesusecase.ReturnArgs{
 		Toolboxes: "Toolbox list",
 	}
+	args := detectmatlabtoolboxes.Args{}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -68,8 +68,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 		Return(expectedResponse, nil).
 		Once()
 
-	args := detectmatlabtoolboxes.Args{}
-
 	// Act
 	result, err := detectmatlabtoolboxes.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
@@ -80,8 +78,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -91,15 +87,15 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	expectedError := assert.AnError
+	args := detectmatlabtoolboxes.Args{}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
 		Return(nil, expectedError).
 		Once()
-
-	args := detectmatlabtoolboxes.Args{}
 
 	// Act
 	result, err := detectmatlabtoolboxes.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
@@ -111,8 +107,6 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 
 func TestTool_Handler_UsecaseError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -122,8 +116,10 @@ func TestTool_Handler_UsecaseError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	expectedError := assert.AnError
+	args := detectmatlabtoolboxes.Args{}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -134,8 +130,6 @@ func TestTool_Handler_UsecaseError(t *testing.T) {
 		Execute(ctx, mockLogger.AsMockArg(), mockMATLABSessionClient).
 		Return(detectmatlabtoolboxesusecase.ReturnArgs{}, expectedError).
 		Once()
-
-	args := detectmatlabtoolboxes.Args{}
 
 	// Act
 	result, err := detectmatlabtoolboxes.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)

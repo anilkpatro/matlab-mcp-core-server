@@ -37,29 +37,29 @@ func TestNewMultiHandler_NoHandlers(t *testing.T) {
 
 func TestSlogMultiHandler_Enabled_AnyHandlerEnabled_ReturnsTrue(t *testing.T) {
 	// Arrange
-	ctx := t.Context()
-	level := slog.LevelInfo
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	ctx := t.Context()
+	expectedLevel := slog.LevelInfo
+
 	mockHandler1.EXPECT().
-		Enabled(ctx, level).
+		Enabled(ctx, expectedLevel).
 		Return(false).
 		Once()
 
 	mockHandler2.EXPECT().
-		Enabled(ctx, level).
+		Enabled(ctx, expectedLevel).
 		Return(true).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	result := multiHandler.Enabled(ctx, level)
+	result := multiHandler.Enabled(ctx, expectedLevel)
 
 	// Assert
 	assert.True(t, result, "Should return true when any handler is enabled")
@@ -67,29 +67,29 @@ func TestSlogMultiHandler_Enabled_AnyHandlerEnabled_ReturnsTrue(t *testing.T) {
 
 func TestSlogMultiHandler_Enabled_NoHandlersEnabled_ReturnsFalse(t *testing.T) {
 	// Arrange
-	ctx := t.Context()
-	level := slog.LevelInfo
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	ctx := t.Context()
+	expectedLevel := slog.LevelInfo
+
 	mockHandler1.EXPECT().
-		Enabled(ctx, level).
+		Enabled(ctx, expectedLevel).
 		Return(false).
 		Once()
 
 	mockHandler2.EXPECT().
-		Enabled(ctx, level).
+		Enabled(ctx, expectedLevel).
 		Return(false).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	result := multiHandler.Enabled(ctx, level)
+	result := multiHandler.Enabled(ctx, expectedLevel)
 
 	// Assert
 	assert.False(t, result, "Should return false when no handlers are enabled")
@@ -111,40 +111,40 @@ func TestSlogMultiHandler_Enabled_NoHandlers_ReturnsFalse(t *testing.T) {
 
 func TestSlogMultiHandler_Handle_AllHandlersEnabled_CallsAll(t *testing.T) {
 	// Arrange
-	ctx := t.Context()
-	record := slog.Record{}
-	record.Level = slog.LevelInfo
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	ctx := t.Context()
+	expectedRecord := slog.Record{}
+	expectedRecord.Level = slog.LevelInfo
+
 	mockHandler1.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(true).
 		Once()
 
 	mockHandler1.EXPECT().
-		Handle(ctx, record).
+		Handle(ctx, expectedRecord).
 		Return(nil).
 		Once()
 
 	mockHandler2.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(true).
 		Once()
 
 	mockHandler2.EXPECT().
-		Handle(ctx, record).
+		Handle(ctx, expectedRecord).
 		Return(nil).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	err := multiHandler.Handle(ctx, record)
+	err := multiHandler.Handle(ctx, expectedRecord)
 
 	// Assert
 	require.NoError(t, err, "Handle should not return an error")
@@ -152,35 +152,35 @@ func TestSlogMultiHandler_Handle_AllHandlersEnabled_CallsAll(t *testing.T) {
 
 func TestSlogMultiHandler_Handle_SomeHandlersDisabled_OnlyCallsEnabled(t *testing.T) {
 	// Arrange
-	ctx := t.Context()
-	record := slog.Record{}
-	record.Level = slog.LevelInfo
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	ctx := t.Context()
+	expectedRecord := slog.Record{}
+	expectedRecord.Level = slog.LevelInfo
+
 	mockHandler1.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(false).
 		Once()
 
 	mockHandler2.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(true).
 		Once()
 
 	mockHandler2.EXPECT().
-		Handle(ctx, record).
+		Handle(ctx, expectedRecord).
 		Return(nil).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	err := multiHandler.Handle(ctx, record)
+	err := multiHandler.Handle(ctx, expectedRecord)
 
 	// Assert
 	require.NoError(t, err, "Handle should not return an error")
@@ -188,42 +188,42 @@ func TestSlogMultiHandler_Handle_SomeHandlersDisabled_OnlyCallsEnabled(t *testin
 
 func TestSlogMultiHandler_Handle_FirstHandlerError_ReturnsFirstError(t *testing.T) {
 	// Arrange
-	ctx := t.Context()
-	record := slog.Record{}
-	record.Level = slog.LevelInfo
-
-	expectedError := assert.AnError
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	ctx := t.Context()
+	expectedRecord := slog.Record{}
+	expectedRecord.Level = slog.LevelInfo
+
+	expectedError := assert.AnError
+
 	mockHandler1.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(true).
 		Once()
 
 	mockHandler1.EXPECT().
-		Handle(ctx, record).
+		Handle(ctx, expectedRecord).
 		Return(expectedError).
 		Once()
 
 	mockHandler2.EXPECT().
-		Enabled(ctx, record.Level).
+		Enabled(ctx, expectedRecord.Level).
 		Return(true).
 		Once()
 
 	mockHandler2.EXPECT().
-		Handle(ctx, record).
+		Handle(ctx, expectedRecord).
 		Return(nil).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	err := multiHandler.Handle(ctx, record)
+	err := multiHandler.Handle(ctx, expectedRecord)
 
 	// Assert
 	assert.ErrorIs(t, err, expectedError, "Should return the first error encountered")
@@ -246,31 +246,31 @@ func TestSlogMultiHandler_Handle_NoHandlers_ReturnsNil(t *testing.T) {
 
 func TestSlogMultiHandler_WithAttrs_CallsAllHandlers(t *testing.T) {
 	// Arrange
-	attrs := []slog.Attr{
-		slog.String("key1", "value1"),
-		slog.String("key2", "value2"),
-	}
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	expectedAttrs := []slog.Attr{
+		slog.String("key1", "value1"),
+		slog.String("key2", "value2"),
+	}
+
 	mockHandler1.EXPECT().
-		WithAttrs(attrs).
+		WithAttrs(expectedAttrs).
 		Return(mockHandler1).
 		Once()
 
 	mockHandler2.EXPECT().
-		WithAttrs(attrs).
+		WithAttrs(expectedAttrs).
 		Return(mockHandler2).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	result := multiHandler.WithAttrs(attrs)
+	result := multiHandler.WithAttrs(expectedAttrs)
 
 	// Assert
 	assert.Equal(t, multiHandler, result, "WithAttrs should return the same multiHandler instance")
@@ -293,28 +293,28 @@ func TestSlogMultiHandler_WithAttrs_NoHandlers_ReturnsItself(t *testing.T) {
 
 func TestSlogMultiHandler_WithGroup_CallsAllHandlers(t *testing.T) {
 	// Arrange
-	groupName := "test-group"
-
 	mockHandler1 := &loggermocks.MockHandler{}
 	defer mockHandler1.AssertExpectations(t)
 
 	mockHandler2 := &loggermocks.MockHandler{}
 	defer mockHandler2.AssertExpectations(t)
 
+	expectedGroupName := "test-group"
+
 	mockHandler1.EXPECT().
-		WithGroup(groupName).
+		WithGroup(expectedGroupName).
 		Return(mockHandler1).
 		Once()
 
 	mockHandler2.EXPECT().
-		WithGroup(groupName).
+		WithGroup(expectedGroupName).
 		Return(mockHandler2).
 		Once()
 
 	multiHandler := logger.NewMultiHandler(mockHandler1, mockHandler2)
 
 	// Act
-	result := multiHandler.WithGroup(groupName)
+	result := multiHandler.WithGroup(expectedGroupName)
 
 	// Assert
 	assert.Equal(t, multiHandler, result, "WithGroup should return the same multiHandler instance")

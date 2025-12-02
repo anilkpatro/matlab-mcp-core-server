@@ -337,7 +337,7 @@ func TestReceiver_C_ProcessToKill_InvalidPID(t *testing.T) {
 	defer mockOSStdio.AssertExpectations(t)
 
 	invalidPID := "not_a_number"
-	validPID := 123245
+	expectedValidPID := 123245
 
 	mockStdin := &entitiesmocks.MockReader{}
 	defer mockStdin.AssertExpectations(t)
@@ -373,7 +373,7 @@ func TestReceiver_C_ProcessToKill_InvalidPID(t *testing.T) {
 		}).
 		Once()
 
-	expectedValidMessageBytes := []byte(fmt.Sprintf("%d\n", validPID))
+	expectedValidMessageBytes := []byte(fmt.Sprintf("%d\n", expectedValidPID))
 
 	mockStdin.EXPECT().
 		Read(mock.Anything).
@@ -409,7 +409,7 @@ func TestReceiver_C_ProcessToKill_InvalidPID(t *testing.T) {
 	case message := <-receiver.C():
 		processToKill, ok := message.(transport.ProcessToKill)
 		require.True(t, ok)
-		assert.Equal(t, validPID, processToKill.PID, "Should receive expected PID")
+		assert.Equal(t, expectedValidPID, processToKill.PID, "Should receive expected PID")
 	case <-time.After(100 * time.Millisecond):
 		t.Fatal("Should have received PID within timeout")
 	}

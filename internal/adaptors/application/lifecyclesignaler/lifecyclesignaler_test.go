@@ -39,17 +39,19 @@ func TestLifecycleSignaler_AddShutdownFunction_SingleFunction(t *testing.T) {
 	signaler := lifecyclesignaler.New()
 	functionCalled := false
 
-	// Act & Assert
+	// Act
 	signaler.AddShutdownFunction(func() error {
 		functionCalled = true
 		return nil
 	})
 
-	assert.False(t, functionCalled, "Function called before shutdown requested")
+	preShutdownStatus := functionCalled
 
 	signaler.RequestShutdown()
 	err := signaler.WaitForShutdownToComplete()
 
+	// Assert
+	assert.False(t, preShutdownStatus, "Function called before shutdown requested")
 	require.NoError(t, err)
 	assert.True(t, functionCalled, "Function not called after shutdown requested")
 }
@@ -136,7 +138,7 @@ func TestLifecycleSignaler_WaitForShutdownToComplete_WaitAndDoesNotTimeOutWithou
 
 	const additionalDelay = 100 * time.Millisecond
 
-	// Act & Assert
+	// Act
 	errC := make(chan error)
 	go func() {
 		errC <- signaler.WaitForShutdownToComplete()
@@ -144,18 +146,20 @@ func TestLifecycleSignaler_WaitForShutdownToComplete_WaitAndDoesNotTimeOutWithou
 
 	time.Sleep(shutdownTimeout + additionalDelay)
 
+	var receivedErrorBeforeShutdown bool
 	select {
 	case <-errC:
-		t.Fatal("WaitForShutdownToComplete should be blocking until RequestShutdown is called")
+		receivedErrorBeforeShutdown = true
 	default:
 		// No error received, continue
 	}
 
 	signaler.RequestShutdown()
+	finalErr := <-errC
 
-	err := <-errC
-
-	assert.NoError(t, err, "There should be no error")
+	// Assert
+	require.False(t, receivedErrorBeforeShutdown, "WaitForShutdownToComplete should be blocking until RequestShutdown is called.")
+	assert.NoError(t, finalErr, "There should be no error")
 }
 
 func TestLifecycleSignaler_WaitForShutdownToComplete_TimesOut(t *testing.T) {

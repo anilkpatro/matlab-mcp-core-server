@@ -4,6 +4,7 @@ package process_test
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/application/inputs/flags"
@@ -42,8 +43,8 @@ func TestNew_HappyPath(t *testing.T) {
 	mockStderr := &entitiesmocks.MockReader{}
 	defer mockStderr.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 
@@ -68,7 +69,7 @@ func TestNew_HappyPath(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -119,8 +120,8 @@ func TestNew_StdinPipeError(t *testing.T) {
 	mockCmd := &osfacademocks.MockCmd{}
 	defer mockCmd.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 	expectedError := errors.New("stdin pipe error")
@@ -146,7 +147,7 @@ func TestNew_StdinPipeError(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -186,8 +187,8 @@ func TestNew_StdoutPipeError(t *testing.T) {
 	mockStdin := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 	expectedError := errors.New("stdout pipe error")
@@ -213,7 +214,7 @@ func TestNew_StdoutPipeError(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -261,8 +262,8 @@ func TestNew_StderrPipeError(t *testing.T) {
 	mockStdout := &entitiesmocks.MockReader{}
 	defer mockStdout.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 	expectedError := errors.New("stderr pipe error")
@@ -288,7 +289,7 @@ func TestNew_StderrPipeError(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -344,8 +345,8 @@ func TestProcess_Start_HappyPath(t *testing.T) {
 	mockStderr := &entitiesmocks.MockReader{}
 	defer mockStderr.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 
@@ -371,7 +372,7 @@ func TestProcess_Start_HappyPath(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -438,8 +439,8 @@ func TestProcess_Start_Error(t *testing.T) {
 	mockStderr := &entitiesmocks.MockReader{}
 	defer mockStderr.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 	expectedError := errors.New("start process error")
@@ -466,7 +467,7 @@ func TestProcess_Start_Error(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,
@@ -533,8 +534,8 @@ func TestProcess_Stdio_HappyPath(t *testing.T) {
 	mockStderr := &entitiesmocks.MockReader{}
 	defer mockStderr.AssertExpectations(t)
 
-	programPath := "/path/to/program"
-	args := []string{programPath, "arg1", "arg2"}
+	expectedProgramPath := filepath.Join("path", "to", "program")
+	args := []string{expectedProgramPath, "arg1", "arg2"}
 	baseDir := "/tmp/base/dir"
 	serverID := "server-id"
 
@@ -560,7 +561,7 @@ func TestProcess_Stdio_HappyPath(t *testing.T) {
 		Once()
 
 	mockOSLayer.EXPECT().
-		Command(programPath, []string{
+		Command(expectedProgramPath, []string{
 			"--" + flags.WatchdogMode,
 			"--" + flags.BaseDir, baseDir,
 			"--" + flags.ServerInstanceID, serverID,

@@ -3,6 +3,7 @@
 package evalmatlabcode_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
@@ -36,8 +37,8 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 	mockClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockClient.AssertExpectations(t)
 
-	projectPath := "/some/path"
-	validatedProjectPath := "/some/path"
+	projectPath := filepath.Join("some", "path")
+	validatedProjectPath := filepath.Join("some", "path")
 
 	evalRequest := evalmatlabcode.Args{
 		ProjectPath: projectPath,
@@ -89,7 +90,7 @@ func TestUsecase_Execute_ValidatePathError(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	ctx := t.Context()
-	projectPath := "/some/path"
+	projectPath := filepath.Join("some", "path")
 	expectedError := assert.AnError
 
 	evalRequest := evalmatlabcode.Args{
@@ -122,8 +123,8 @@ func TestUsecase_Execute_CDEvalError(t *testing.T) {
 	mockClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockClient.AssertExpectations(t)
 
-	projectPath := "/some/path"
-	validatedProjectPath := "/some/path"
+	projectPath := filepath.Join("some", "path")
+	validatedProjectPath := filepath.Join("some", "path")
 
 	evalRequest := evalmatlabcode.Args{
 		Code:        "disp('Hello, World!')",
@@ -166,8 +167,8 @@ func TestUsecase_Execute_EvalError(t *testing.T) {
 	mockClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockClient.AssertExpectations(t)
 
-	projectPath := "/some/path"
-	validatedProjectPath := "/some/path"
+	projectPath := filepath.Join("some", "path")
+	validatedProjectPath := filepath.Join("some", "path")
 
 	evalRequest := evalmatlabcode.Args{
 		Code:        "disp('Hello, World!')",

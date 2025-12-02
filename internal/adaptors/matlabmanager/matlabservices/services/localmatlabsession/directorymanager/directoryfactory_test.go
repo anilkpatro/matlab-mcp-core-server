@@ -46,23 +46,24 @@ func TestDirectoryFactory_Create_HappyPath(t *testing.T) {
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDir := "/tmp/matlab-session-12345"
-	packageDir := filepath.Join(sessionDir, "+matlab_mcp")
+	expectedSessionDir := filepath.Join("tmp", "matlab-session-12345")
+	packageDir := filepath.Join(expectedSessionDir, "+matlab_mcp")
+	expectedCertificateFile := filepath.Join(expectedSessionDir, "cert.pem")
+	expectedCertificateKeyFile := filepath.Join(expectedSessionDir, "cert.key")
+	expectedMATLABFiles := map[string][]byte{
+		"initializeMCP.m": []byte("some content"),
+		"eval.m":          []byte("some other content"),
+	}
 
 	mockApplicationDirectory.EXPECT().
 		CreateSubDir(mock.AnythingOfType("string")).
-		Return(sessionDir, nil).
+		Return(expectedSessionDir, nil).
 		Once()
 
 	mockOSLayer.EXPECT().
 		Mkdir(packageDir, os.FileMode(0o700)).
 		Return(nil).
 		Once()
-
-	expectedMATLABFiles := map[string][]byte{
-		"initializeMCP.m": []byte("some content"),
-		"eval.m":          []byte("some other content"),
-	}
 
 	mockMATLABFiles.EXPECT().
 		GetAll().
@@ -85,9 +86,9 @@ func TestDirectoryFactory_Create_HappyPath(t *testing.T) {
 	// Assert
 	require.NoError(t, err)
 	assert.NotNil(t, directory)
-	assert.Equal(t, sessionDir, directory.Path())
-	assert.Equal(t, filepath.Join(sessionDir, "cert.pem"), directory.CertificateFile())
-	assert.Equal(t, filepath.Join(sessionDir, "cert.key"), directory.CertificateKeyFile())
+	assert.Equal(t, expectedSessionDir, directory.Path())
+	assert.Equal(t, expectedCertificateFile, directory.CertificateFile())
+	assert.Equal(t, expectedCertificateKeyFile, directory.CertificateKeyFile())
 }
 
 func TestDirectoryFactory_Create_MkdirTempError(t *testing.T) {

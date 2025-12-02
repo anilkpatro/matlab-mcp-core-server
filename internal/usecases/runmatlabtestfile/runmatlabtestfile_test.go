@@ -42,7 +42,7 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 
 	usecaseRequest := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
-	evalRequest := entities.EvalRequest{
+	expectedEvalRequest := entities.EvalRequest{
 		Code: fmt.Sprintf("runtests('%s')", scriptPath),
 	}
 
@@ -63,7 +63,7 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 		Once()
 
 	mockClient.EXPECT().
-		EvalWithCapture(ctx, mockLogger.AsMockArg(), evalRequest).
+		EvalWithCapture(ctx, mockLogger.AsMockArg(), expectedEvalRequest).
 		Return(mockResponse, nil).
 		Once()
 
@@ -124,7 +124,7 @@ func TestUsecase_Execute_RunMATLABTestFileEvalError(t *testing.T) {
 
 	usecaseRequest := runmatlabtestfile.Args{ScriptPath: scriptPath}
 
-	evalRequest := entities.EvalRequest{
+	expectedEvalRequest := entities.EvalRequest{
 		Code: fmt.Sprintf("runtests('%s')", scriptPath),
 	}
 
@@ -134,7 +134,7 @@ func TestUsecase_Execute_RunMATLABTestFileEvalError(t *testing.T) {
 		Once()
 
 	mockClient.EXPECT().
-		EvalWithCapture(ctx, mockLogger.AsMockArg(), evalRequest).
+		EvalWithCapture(ctx, mockLogger.AsMockArg(), expectedEvalRequest).
 		Return(entities.EvalResponse{}, expectedError).
 		Once()
 

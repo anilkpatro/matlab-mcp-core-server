@@ -3,6 +3,7 @@
 package localmatlabsession_test
 
 import (
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -61,18 +62,18 @@ func TestStarter_StartLocalMATLABSession_HappyPath(t *testing.T) {
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDirPath := "/tmp/matlab-session-12345"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	securePort := "9999"
-	certificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedSecurePort := "9999"
+	expectedCertificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
 	showDestop := false
-	startupFlags := []string{"-r", startupCode}
-	processID := 12345
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
+	expectedProcessID := 12345
 	processCleanupCalled := false
 	processCleanup := func() {
 		processCleanupCalled = true
@@ -85,47 +86,47 @@ func TestStarter_StartLocalMATLABSession_HappyPath(t *testing.T) {
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, showDestop, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, showDestop, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, sessionDirPath, startupFlags, env).
-		Return(processID, processCleanup, nil).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedSessionDirPath, expectedStartupFlags, expectedEnv).
+		Return(expectedProcessID, processCleanup, nil).
 		Once()
 
 	mockWatchdog.EXPECT().
-		RegisterProcessPIDWithWatchdog(processID).
+		RegisterProcessPIDWithWatchdog(expectedProcessID).
 		Return(nil).
 		Once()
 
 	mockDirectory.EXPECT().
 		GetEmbeddedConnectorDetails().
-		Return(securePort, certificatePEM, nil).
+		Return(expectedSecurePort, expectedCertificatePEM, nil).
 		Once()
 
 	mockDirectory.EXPECT().
@@ -140,21 +141,21 @@ func TestStarter_StartLocalMATLABSession_HappyPath(t *testing.T) {
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
+	startRequest := datatypes.LocalSessionDetails{
 		IsStartingDirectorySet: false,
-		MATLABRoot:             matlabRoot,
+		MATLABRoot:             expectedMATLABRoot,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.NoError(t, err)
 	assert.NotNil(t, cleanup)
 	assert.Equal(t, "localhost", connectionDetails.Host)
-	assert.Equal(t, securePort, connectionDetails.Port)
-	assert.Equal(t, apiKey, connectionDetails.APIKey)
-	assert.Equal(t, certificatePEM, connectionDetails.CertificatePEM)
+	assert.Equal(t, expectedSecurePort, connectionDetails.Port)
+	assert.Equal(t, expectedAPIKey, connectionDetails.APIKey)
+	assert.Equal(t, expectedCertificatePEM, connectionDetails.CertificatePEM)
 
 	assert.False(t, processCleanupCalled)
 	err = cleanup()
@@ -181,19 +182,19 @@ func TestStarter_StartLocalMATLABSession_WithStartingDirectory(t *testing.T) {
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDirPath := "/tmp/matlab-session-12345"
-	startingDir := "/somewhere"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	securePort := "9999"
-	certificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedStartingDir := filepath.Join("home", "somewhere")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedSecurePort := "9999"
+	expectedCertificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
 	showDesktop := false
-	startupFlags := []string{"-r", startupCode}
-	processID := 12345
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
+	expectedProcessID := 12345
 	processCleanup := func() {}
 
 	mockDirectoryFactory.EXPECT().
@@ -203,48 +204,48 @@ func TestStarter_StartLocalMATLABSession_WithStartingDirectory(t *testing.T) {
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, showDesktop, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, showDesktop, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	// Note: When starting directory is empty, it should use sessionDirPath
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, startingDir, startupFlags, env).
-		Return(processID, processCleanup, nil).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedStartingDir, expectedStartupFlags, expectedEnv).
+		Return(expectedProcessID, processCleanup, nil).
 		Once()
 
 	mockWatchdog.EXPECT().
-		RegisterProcessPIDWithWatchdog(processID).
+		RegisterProcessPIDWithWatchdog(expectedProcessID).
 		Return(nil).
 		Once()
 
 	mockDirectory.EXPECT().
 		GetEmbeddedConnectorDetails().
-		Return(securePort, certificatePEM, nil).
+		Return(expectedSecurePort, expectedCertificatePEM, nil).
 		Once()
 
 	starter := localmatlabsession.NewStarter(
@@ -254,23 +255,23 @@ func TestStarter_StartLocalMATLABSession_WithStartingDirectory(t *testing.T) {
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             matlabRoot,
-		StartingDirectory:      startingDir,
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             expectedMATLABRoot,
+		StartingDirectory:      expectedStartingDir,
 		IsStartingDirectorySet: true,
 		ShowMATLABDesktop:      showDesktop,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.NoError(t, err)
 	assert.NotNil(t, cleanup)
 	assert.Equal(t, "localhost", connectionDetails.Host)
-	assert.Equal(t, securePort, connectionDetails.Port)
-	assert.Equal(t, apiKey, connectionDetails.APIKey)
-	assert.Equal(t, certificatePEM, connectionDetails.CertificatePEM)
+	assert.Equal(t, expectedSecurePort, connectionDetails.Port)
+	assert.Equal(t, expectedAPIKey, connectionDetails.APIKey)
+	assert.Equal(t, expectedCertificatePEM, connectionDetails.CertificatePEM)
 }
 
 func TestStarter_StartLocalMATLABSession_DirectoryFactoryCreateError(t *testing.T) {
@@ -303,15 +304,15 @@ func TestStarter_StartLocalMATLABSession_DirectoryFactoryCreateError(t *testing.
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             "/usr/local/MATLAB/R2024b",
-		StartingDirectory:      "/home/user/workspace",
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             filepath.Join("usr", "local", "MATLAB", "R2024b"),
+		StartingDirectory:      filepath.Join("home", "user", "workspace"),
 		IsStartingDirectorySet: true,
 		ShowMATLABDesktop:      false,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.ErrorIs(t, err, expectedError)
@@ -338,14 +339,14 @@ func TestStarter_StartLocalMATLABSession_MATLABProcessLauncherError(t *testing.T
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDirPath := "/tmp/matlab-session-12345"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
-	startupFlags := []string{"-r", startupCode}
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
 	expectedError := assert.AnError
 
 	mockDirectoryFactory.EXPECT().
@@ -355,36 +356,36 @@ func TestStarter_StartLocalMATLABSession_MATLABProcessLauncherError(t *testing.T
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, false, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, false, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, sessionDirPath, startupFlags, env).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedSessionDirPath, expectedStartupFlags, expectedEnv).
 		Return(0, nil, expectedError).
 		Once()
 
@@ -395,13 +396,13 @@ func TestStarter_StartLocalMATLABSession_MATLABProcessLauncherError(t *testing.T
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             matlabRoot,
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             expectedMATLABRoot,
 		IsStartingDirectorySet: false,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.ErrorIs(t, err, expectedError)
@@ -428,20 +429,20 @@ func TestStarter_StartLocalMATLABSession_RegisterProcessPIDWithWatchdogError(t *
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	startingDir := "/somewhere"
-	sessionDirPath := "/tmp/matlab-session-12345"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
-	startupFlags := []string{"-r", startupCode}
+	expectedStartingDir := filepath.Join("somewhere")
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
 	expectedError := assert.AnError
-	processID := 12345
+	expectedProcessID := 12345
 	processCleanup := func() {}
-	certificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
-	securePort := "9999"
+	expectedCertificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
+	expectedSecurePort := "9999"
 	showDesktop := false
 
 	mockDirectoryFactory.EXPECT().
@@ -451,47 +452,47 @@ func TestStarter_StartLocalMATLABSession_RegisterProcessPIDWithWatchdogError(t *
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, false, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, false, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, startingDir, startupFlags, env).
-		Return(processID, processCleanup, nil).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedStartingDir, expectedStartupFlags, expectedEnv).
+		Return(expectedProcessID, processCleanup, nil).
 		Once()
 
 	mockWatchdog.EXPECT().
-		RegisterProcessPIDWithWatchdog(processID).
+		RegisterProcessPIDWithWatchdog(expectedProcessID).
 		Return(expectedError).
 		Once()
 
 	mockDirectory.EXPECT().
 		GetEmbeddedConnectorDetails().
-		Return(securePort, certificatePEM, nil).
+		Return(expectedSecurePort, expectedCertificatePEM, nil).
 		Once()
 
 	starter := localmatlabsession.NewStarter(
@@ -501,23 +502,23 @@ func TestStarter_StartLocalMATLABSession_RegisterProcessPIDWithWatchdogError(t *
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             matlabRoot,
-		StartingDirectory:      startingDir,
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             expectedMATLABRoot,
+		StartingDirectory:      expectedStartingDir,
 		IsStartingDirectorySet: true,
 		ShowMATLABDesktop:      showDesktop,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.NoError(t, err)
 	assert.NotNil(t, cleanup)
 	assert.Equal(t, "localhost", connectionDetails.Host)
-	assert.Equal(t, securePort, connectionDetails.Port)
-	assert.Equal(t, apiKey, connectionDetails.APIKey)
-	assert.Equal(t, certificatePEM, connectionDetails.CertificatePEM)
+	assert.Equal(t, expectedSecurePort, connectionDetails.Port)
+	assert.Equal(t, expectedAPIKey, connectionDetails.APIKey)
+	assert.Equal(t, expectedCertificatePEM, connectionDetails.CertificatePEM)
 
 	logs := mockLogger.WarnLogs()
 
@@ -552,15 +553,15 @@ func TestStarter_StartLocalMATLABSession_GetEmbeddedConnectorDetailsError(t *tes
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDirPath := "/tmp/matlab-session-12345"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
-	startupFlags := []string{"-r", startupCode}
-	processID := 12345
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
+	expectedProcessID := 12345
 	processCleanup := func() {}
 	expectedError := assert.AnError
 
@@ -571,41 +572,41 @@ func TestStarter_StartLocalMATLABSession_GetEmbeddedConnectorDetailsError(t *tes
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, false, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, false, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, sessionDirPath, startupFlags, env).
-		Return(processID, processCleanup, nil).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedSessionDirPath, expectedStartupFlags, expectedEnv).
+		Return(expectedProcessID, processCleanup, nil).
 		Once()
 
 	mockWatchdog.EXPECT().
-		RegisterProcessPIDWithWatchdog(processID).
+		RegisterProcessPIDWithWatchdog(expectedProcessID).
 		Return(nil).
 		Once()
 
@@ -621,13 +622,13 @@ func TestStarter_StartLocalMATLABSession_GetEmbeddedConnectorDetailsError(t *tes
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             matlabRoot,
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             expectedMATLABRoot,
 		IsStartingDirectorySet: false,
 	}
 
 	// Act
-	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	connectionDetails, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 
 	// Assert
 	require.ErrorIs(t, err, expectedError)
@@ -654,18 +655,18 @@ func TestStarter_StartLocalMATLABSession_CleanupReturnsSessionCleanupError(t *te
 
 	mockLogger := testutils.NewInspectableLogger()
 
-	sessionDirPath := "/tmp/matlab-session-12345"
-	certificateFile := "/tmp/matlab-session-12345/cert.pem"
-	certificateKeyFile := "/tmp/matlab-session-12345/cert.key"
-	apiKey := "test-api-key-12345"
-	matlabRoot := "/usr/local/MATLAB/R2024b"
-	securePort := "9999"
-	certificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
-	env := []string{"MATLAB_MCP_API_KEY=" + apiKey}
-	startupCode := "sessionPath = '" + sessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
+	expectedSessionDirPath := filepath.Join("tmp", "matlab-session-12345")
+	expectedCertificateFile := filepath.Join("tmp", "matlab-session-12345", "cert.pem")
+	expectedCertificateKeyFile := filepath.Join("tmp", "matlab-session-12345", "cert.key")
+	expectedAPIKey := "test-api-key-12345"
+	expectedMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
+	expectedSecurePort := "9999"
+	expectedCertificatePEM := []byte("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----")
+	expectedEnv := []string{"MATLAB_MCP_API_KEY=" + expectedAPIKey}
+	expectedStartupCode := "sessionPath = '" + expectedSessionDirPath + "';addpath(sessionPath);matlab_mcp.initializeMCP();clear sessionPath;"
 	showDestop := false
-	startupFlags := []string{"-r", startupCode}
-	processID := 12345
+	expectedStartupFlags := []string{"-r", expectedStartupCode}
+	expectedProcessID := 12345
 	processCleanup := func() {}
 	expectedError := assert.AnError
 
@@ -676,47 +677,47 @@ func TestStarter_StartLocalMATLABSession_CleanupReturnsSessionCleanupError(t *te
 
 	mockDirectory.EXPECT().
 		Path().
-		Return(sessionDirPath).
+		Return(expectedSessionDirPath).
 		Once()
 
 	mockProcessDetails.EXPECT().
 		NewAPIKey().
-		Return(apiKey).
+		Return(expectedAPIKey).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateFile().
-		Return(certificateFile).
+		Return(expectedCertificateFile).
 		Once()
 
 	mockDirectory.EXPECT().
 		CertificateKeyFile().
-		Return(certificateKeyFile).
+		Return(expectedCertificateKeyFile).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		EnvironmentVariables(sessionDirPath, apiKey, certificateFile, certificateKeyFile).
-		Return(env).
+		EnvironmentVariables(expectedSessionDirPath, expectedAPIKey, expectedCertificateFile, expectedCertificateKeyFile).
+		Return(expectedEnv).
 		Once()
 
 	mockProcessDetails.EXPECT().
-		StartupFlag(runtime.GOOS, showDestop, startupCode).
-		Return(startupFlags).
+		StartupFlag(runtime.GOOS, showDestop, expectedStartupCode).
+		Return(expectedStartupFlags).
 		Once()
 
 	mockMATLABProcessLauncher.EXPECT().
-		Launch(mockLogger.AsMockArg(), sessionDirPath, matlabRoot, sessionDirPath, startupFlags, env).
-		Return(processID, processCleanup, nil).
+		Launch(mockLogger.AsMockArg(), expectedSessionDirPath, expectedMATLABRoot, expectedSessionDirPath, expectedStartupFlags, expectedEnv).
+		Return(expectedProcessID, processCleanup, nil).
 		Once()
 
 	mockWatchdog.EXPECT().
-		RegisterProcessPIDWithWatchdog(processID).
+		RegisterProcessPIDWithWatchdog(expectedProcessID).
 		Return(nil).
 		Once()
 
 	mockDirectory.EXPECT().
 		GetEmbeddedConnectorDetails().
-		Return(securePort, certificatePEM, nil).
+		Return(expectedSecurePort, expectedCertificatePEM, nil).
 		Once()
 
 	mockDirectory.EXPECT().
@@ -731,12 +732,12 @@ func TestStarter_StartLocalMATLABSession_CleanupReturnsSessionCleanupError(t *te
 		mockWatchdog,
 	)
 
-	request := datatypes.LocalSessionDetails{
-		MATLABRoot:             matlabRoot,
+	startRequest := datatypes.LocalSessionDetails{
+		MATLABRoot:             expectedMATLABRoot,
 		IsStartingDirectorySet: false,
 	}
 
-	_, cleanup, err := starter.StartLocalMATLABSession(mockLogger, request)
+	_, cleanup, err := starter.StartLocalMATLABSession(mockLogger, startRequest)
 	require.NoError(t, err)
 	require.NotNil(t, cleanup)
 

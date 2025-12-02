@@ -31,10 +31,6 @@ func TestNewToolWithStructuredContent_HappyPath(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
 
 	const (
 		toolName        = "test-tool"
@@ -45,6 +41,11 @@ func TestNewToolWithStructuredContent_HappyPath(t *testing.T) {
 	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
 		return TestOutput{Result: "success"}, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
 
 	// Act
 	tool := basetool.NewToolWithStructuredContent(
@@ -82,10 +83,6 @@ func TestToolWithStructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	defer mockAdder.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
 
 	const (
 		toolName        = "test-tool"
@@ -96,6 +93,11 @@ func TestToolWithStructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
 		return TestOutput{Result: "success"}, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
 
 	tool := basetool.NewToolWithStructuredContent(
 		toolName,
@@ -111,10 +113,10 @@ func TestToolWithStructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	toolOutputSchema, err := tool.GetOutputSchema()
 	require.NoError(t, err, "GetOutputSchema should not return an error")
 
-	server := mcp.NewServer(&mcp.Implementation{}, &mcp.ServerOptions{})
+	expectedServer := mcp.NewServer(&mcp.Implementation{}, &mcp.ServerOptions{})
 
 	mockAdder.EXPECT().AddTool(
-		server,
+		expectedServer,
 		&mcp.Tool{
 			Name:         toolName,
 			Title:        toolTitle,
@@ -128,7 +130,7 @@ func TestToolWithStructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	tool.SetToolAdder(mockAdder)
 
 	// Act
-	err = tool.AddToServer(server)
+	err = tool.AddToServer(expectedServer)
 
 	// Assert
 	require.NoError(t, err, "AddToServer should not return an error")
@@ -140,25 +142,24 @@ func TestToolWithStructuredContentOutput_Handler_HappyPath(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockGlobalLogger := testutils.NewInspectableLogger()
+	expectedSession := &mcp.ServerSession{}
+	expectedInput := TestInput{Message: "test message"}
+	expectedOutput := TestOutput{Result: "processed: test message"}
+	mockSessionLogger := testutils.NewInspectableLogger()
+
+	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
+		return TestOutput{Result: "processed: " + input.Message}, nil
+	}
+
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockGlobalLogger).
 		Once()
 
-	mockSession := &mcp.ServerSession{}
-
-	expectedInput := TestInput{Message: "test message"}
-	expectedOutput := TestOutput{Result: "processed: test message"}
-
-	mockSessionLogger := testutils.NewInspectableLogger()
 	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
+		NewMCPSessionLogger(expectedSession).
 		Return(mockSessionLogger).
 		Once()
-
-	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
-		return TestOutput{Result: "processed: " + input.Message}, nil
-	}
 
 	tool := basetool.NewToolWithStructuredContent(
 		"test-tool",
@@ -169,7 +170,7 @@ func TestToolWithStructuredContentOutput_Handler_HappyPath(t *testing.T) {
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -187,25 +188,24 @@ func TestToolWithStructuredContentOutput_Handler_StructuredHandlerError(t *testi
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockGlobalLogger := testutils.NewInspectableLogger()
+	expectedSession := &mcp.ServerSession{}
+	expectedInput := TestInput{Message: "test message"}
+	expectedError := assert.AnError
+	mockSessionLogger := testutils.NewInspectableLogger()
+
+	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
+		return TestOutput{}, expectedError
+	}
+
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockGlobalLogger).
 		Once()
 
-	mockSession := &mcp.ServerSession{}
-
-	expectedInput := TestInput{Message: "test message"}
-	expectedError := assert.AnError
-
-	mockSessionLogger := testutils.NewInspectableLogger()
 	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
+		NewMCPSessionLogger(expectedSession).
 		Return(mockSessionLogger).
 		Once()
-
-	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
-		return TestOutput{}, expectedError
-	}
 
 	tool := basetool.NewToolWithStructuredContent(
 		"test-tool",
@@ -216,7 +216,7 @@ func TestToolWithStructuredContentOutput_Handler_StructuredHandlerError(t *testi
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -234,27 +234,26 @@ func TestToolWithStructuredContentOutput_Handler_ContextPropagation(t *testing.T
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockGlobalLogger := testutils.NewInspectableLogger()
+	expectedSession := &mcp.ServerSession{}
+	expectedInput := TestInput{Message: "test message"}
+	expectedOutput := TestOutput{Result: "success"}
+	mockSessionLogger := testutils.NewInspectableLogger()
+	var capturedContext context.Context
+
+	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
+		capturedContext = ctx
+		return expectedOutput, nil
+	}
+
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockGlobalLogger).
 		Once()
 
-	mockSession := &mcp.ServerSession{}
-
-	expectedInput := TestInput{Message: "test message"}
-	expectedOutput := TestOutput{Result: "success"}
-
-	mockSessionLogger := testutils.NewInspectableLogger()
 	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
+		NewMCPSessionLogger(expectedSession).
 		Return(mockSessionLogger).
 		Once()
-
-	var capturedContext context.Context
-	handler := func(ctx context.Context, logger entities.Logger, input TestInput) (TestOutput, error) {
-		capturedContext = ctx
-		return expectedOutput, nil
-	}
 
 	tool := basetool.NewToolWithStructuredContent(
 		"test-tool",
@@ -265,7 +264,7 @@ func TestToolWithStructuredContentOutput_Handler_ContextPropagation(t *testing.T
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act

@@ -33,17 +33,17 @@ func TestProcessHandler_WatchProcessAndGetTerminationChan_HappyPath(t *testing.T
 	mockProcess := &osfacademocks.MockProcess{}
 	defer mockProcess.AssertExpectations(t)
 
-	processPid := 1234
+	expectedProcessPid := 1234
 
 	mockOSWrapper.EXPECT().
-		WaitForProcessToComplete(processPid).
+		WaitForProcessToComplete(expectedProcessPid).
 		Return().
 		Once()
 
 	processHandlerInstance := processhandler.New(mockOSWrapper)
 
 	// Act
-	terminationChan := processHandlerInstance.WatchProcessAndGetTerminationChan(processPid)
+	terminationChan := processHandlerInstance.WatchProcessAndGetTerminationChan(expectedProcessPid)
 
 	// Assert
 	select {
@@ -62,10 +62,10 @@ func TestProcessHandler_KillProcess_HappyPath(t *testing.T) {
 	mockProcess := &osfacademocks.MockProcess{}
 	defer mockProcess.AssertExpectations(t)
 
-	processPid := 1234
+	expectedProcessPid := 1234
 
 	mockOSWrapper.EXPECT().
-		FindProcess(processPid).
+		FindProcess(expectedProcessPid).
 		Return(mockProcess).
 		Once()
 
@@ -77,7 +77,7 @@ func TestProcessHandler_KillProcess_HappyPath(t *testing.T) {
 	processHandlerInstance := processhandler.New(mockOSWrapper)
 
 	// Act
-	err := processHandlerInstance.KillProcess(processPid)
+	err := processHandlerInstance.KillProcess(expectedProcessPid)
 
 	// Assert
 	require.NoError(t, err, "KillProcess should not return an error when process exists and is killed successfully")
@@ -91,11 +91,11 @@ func TestProcessHandler_KillProcess_ProcessExistsButKillFails(t *testing.T) {
 	mockProcess := &osfacademocks.MockProcess{}
 	defer mockProcess.AssertExpectations(t)
 
-	processPid := 1234
+	expectedProcessPid := 1234
 	expectedError := assert.AnError
 
 	mockOSWrapper.EXPECT().
-		FindProcess(processPid).
+		FindProcess(expectedProcessPid).
 		Return(mockProcess).
 		Once()
 
@@ -107,7 +107,7 @@ func TestProcessHandler_KillProcess_ProcessExistsButKillFails(t *testing.T) {
 	processHandlerInstance := processhandler.New(mockOSWrapper)
 
 	// Act
-	err := processHandlerInstance.KillProcess(processPid)
+	err := processHandlerInstance.KillProcess(expectedProcessPid)
 
 	// Assert
 	assert.ErrorIs(t, err, expectedError, "KillProcess should return the error from Kill method")
@@ -118,17 +118,17 @@ func TestProcessHandler_KillProcess_ProcessDoesNotExist(t *testing.T) {
 	mockOSWrapper := &processhandlermocks.MockOSWrapper{}
 	defer mockOSWrapper.AssertExpectations(t)
 
-	processPid := 1234
+	expectedProcessPid := 1234
 
 	mockOSWrapper.EXPECT().
-		FindProcess(processPid).
+		FindProcess(expectedProcessPid).
 		Return(nil).
 		Once()
 
 	processHandlerInstance := processhandler.New(mockOSWrapper)
 
 	// Act
-	err := processHandlerInstance.KillProcess(processPid)
+	err := processHandlerInstance.KillProcess(expectedProcessPid)
 
 	// Assert
 	require.NoError(t, err, "KillProcess should not return an error when process doesn't exist")

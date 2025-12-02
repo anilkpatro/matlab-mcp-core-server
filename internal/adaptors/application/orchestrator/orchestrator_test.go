@@ -58,8 +58,6 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestOrchestrator_StartAndWaitForCompletion_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLifecycleSignaler := &orchestratormocks.MockLifecycleSignaler{}
 	defer mockLifecycleSignaler.AssertExpectations(t)
 
@@ -76,7 +74,7 @@ func TestOrchestrator_StartAndWaitForCompletion_HappyPath(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockSignalLayer := &orchestratormocks.MockOSSignaler{}
-	defer mockLoggerFactory.AssertExpectations(t)
+	defer mockSignalLayer.AssertExpectations(t)
 
 	mockGlobalMATLABManager := &orchestratormocks.MockGlobalMATLAB{}
 	defer mockGlobalMATLABManager.AssertExpectations(t)
@@ -84,8 +82,12 @@ func TestOrchestrator_StartAndWaitForCompletion_HappyPath(t *testing.T) {
 	mockDirectory := &orchestratormocks.MockDirectory{}
 	defer mockDirectory.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	interruptC := getInterruptChannel()
+	serverStarted := make(chan struct{})
+	stopServer := make(chan struct{})
+	defer close(stopServer)
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -108,11 +110,6 @@ func TestOrchestrator_StartAndWaitForCompletion_HappyPath(t *testing.T) {
 		Once()
 
 	// Server should run indefinitely (simulate with a blocking channel)
-	serverStarted := make(chan struct{})
-
-	stopServer := make(chan struct{})
-	defer close(stopServer)
-
 	mockServer.EXPECT().
 		Run().
 		RunAndReturn(func() error {
@@ -179,8 +176,6 @@ func TestOrchestrator_StartAndWaitForCompletion_HappyPath(t *testing.T) {
 
 func TestOrchestrator_StartAndWaitForCompletion_ServerError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLifecycleSignaler := &orchestratormocks.MockLifecycleSignaler{}
 	defer mockLifecycleSignaler.AssertExpectations(t)
 
@@ -205,9 +200,9 @@ func TestOrchestrator_StartAndWaitForCompletion_ServerError(t *testing.T) {
 	mockDirectory := &orchestratormocks.MockDirectory{}
 	defer mockDirectory.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	interruptC := getInterruptChannel()
-
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
@@ -285,8 +280,6 @@ func TestOrchestrator_StartAndWaitForCompletion_ServerError(t *testing.T) {
 
 func TestOrchestrator_StartAndWaitForCompletion_InitializeMATLABErrorDoesNotTriggerShutdown(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLifecycleSignaler := &orchestratormocks.MockLifecycleSignaler{}
 	defer mockLifecycleSignaler.AssertExpectations(t)
 
@@ -311,10 +304,11 @@ func TestOrchestrator_StartAndWaitForCompletion_InitializeMATLABErrorDoesNotTrig
 	mockDirectory := &orchestratormocks.MockDirectory{}
 	defer mockDirectory.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	expectedError := assert.AnError
-
 	closeServerRoutine := make(chan struct{})
+	isShutdownCalled := make(chan struct{})
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -358,8 +352,6 @@ func TestOrchestrator_StartAndWaitForCompletion_InitializeMATLABErrorDoesNotTrig
 		InterruptSignalChan().
 		Return(getInterruptChannel()).
 		Once()
-
-	isShutdownCalled := make(chan struct{})
 
 	mockLifecycleSignaler.EXPECT().
 		RequestShutdown().
@@ -410,8 +402,6 @@ func TestOrchestrator_StartAndWaitForCompletion_InitializeMATLABErrorDoesNotTrig
 
 func TestOrchestrator_StartAndWaitForCompletion_WaitForShutdownToCompleteError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLifecycleSignaler := &orchestratormocks.MockLifecycleSignaler{}
 	defer mockLifecycleSignaler.AssertExpectations(t)
 
@@ -436,9 +426,9 @@ func TestOrchestrator_StartAndWaitForCompletion_WaitForShutdownToCompleteError(t
 	mockDirectory := &orchestratormocks.MockDirectory{}
 	defer mockDirectory.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	interruptC := getInterruptChannel()
-
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
@@ -532,8 +522,6 @@ func TestOrchestrator_StartAndWaitForCompletion_WaitForShutdownToCompleteError(t
 
 func TestOrchestrator_runMATLABMCPServerMain_MultipleSession_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLifecycleSignaler := &orchestratormocks.MockLifecycleSignaler{}
 	defer mockLifecycleSignaler.AssertExpectations(t)
 
@@ -558,6 +546,7 @@ func TestOrchestrator_runMATLABMCPServerMain_MultipleSession_HappyPath(t *testin
 	mockDirectory := &orchestratormocks.MockDirectory{}
 	defer mockDirectory.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	interruptC := getInterruptChannel()
 

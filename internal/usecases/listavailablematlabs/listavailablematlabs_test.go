@@ -3,6 +3,7 @@
 package listavailablematlabs_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
@@ -35,17 +36,17 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 
 	mockEnvironments := []entities.EnvironmentInfo{
 		{
-			MATLABRoot: "/path/to/matlab/R2023a",
+			MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 			Version:    "R2023a",
 		},
 		{
-			MATLABRoot: "/path/to/matlab/R2022b",
+			MATLABRoot: filepath.Join("path", "to", "matlab", "R2022b"),
 			Version:    "R2022b",
 		},
 	}
 
 	mockMATLABManager.EXPECT().
-		ListEnvironments(mock.Anything, mockLogger).
+		ListEnvironments(mock.Anything, mockLogger.AsMockArg()).
 		Return(mockEnvironments).
 		Once()
 

@@ -3,6 +3,7 @@
 package startmatlabsession_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
@@ -41,7 +42,7 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	startSessionRequest := entities.LocalSessionDetails{
-		MATLABRoot: "/path/to/matlab/R2023a",
+		MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 	}
 
 	ctx := t.Context()
@@ -90,7 +91,7 @@ func TestUsecase_Execute_StartSessionError(t *testing.T) {
 	defer mockMATLABManager.AssertExpectations(t)
 
 	startSessionRequest := entities.LocalSessionDetails{
-		MATLABRoot: "/path/to/matlab/R2023a",
+		MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 	}
 
 	ctx := t.Context()
@@ -121,7 +122,7 @@ func TestUsecase_Execute_GetMATLABSessionClientError(t *testing.T) {
 	defer mockMATLABManager.AssertExpectations(t)
 
 	startSessionRequest := entities.LocalSessionDetails{
-		MATLABRoot: "/path/to/matlab/R2023a",
+		MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 	}
 
 	ctx := t.Context()
@@ -160,7 +161,7 @@ func TestUsecase_Execute_VerEvalError(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	startSessionRequest := entities.LocalSessionDetails{
-		MATLABRoot: "/path/to/matlab/R2023a",
+		MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 	}
 
 	ctx := t.Context()
@@ -204,7 +205,7 @@ func TestUsecase_Execute_AddOnsEvalError(t *testing.T) {
 	defer mockClient.AssertExpectations(t)
 
 	startSessionRequest := entities.LocalSessionDetails{
-		MATLABRoot: "/path/to/matlab/R2023a",
+		MATLABRoot: filepath.Join("path", "to", "matlab", "R2023a"),
 	}
 
 	ctx := t.Context()

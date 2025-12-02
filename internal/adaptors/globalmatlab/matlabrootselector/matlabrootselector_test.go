@@ -3,6 +3,7 @@
 package matlabrootselector_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,43 +40,43 @@ func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_HappyPath(t *testing.
 			name: "single MATLAB installation",
 			environments: []entities.EnvironmentInfo{
 				{
-					MATLABRoot: "/usr/local/MATLAB/R2024b",
+					MATLABRoot: filepath.Join("usr", "local", "MATLAB", "R2024b"),
 					Version:    "R2024b",
 				},
 			},
-			expected: "/usr/local/MATLAB/R2024b",
+			expected: filepath.Join("usr", "local", "MATLAB", "R2024b"),
 		},
 		{
 			name: "multiple MATLAB installations - returns first one",
 			environments: []entities.EnvironmentInfo{
 				{
-					MATLABRoot: "/usr/local/MATLAB/R2023b",
+					MATLABRoot: filepath.Join("usr", "local", "MATLAB", "R2023b"),
 					Version:    "R2023b",
 				},
 				{
-					MATLABRoot: "/usr/local/MATLAB/R2024b",
+					MATLABRoot: filepath.Join("usr", "local", "MATLAB", "R2024b"),
 					Version:    "R2024b",
 				},
 				{
-					MATLABRoot: "/usr/local/MATLAB/R2024a",
+					MATLABRoot: filepath.Join("usr", "local", "MATLAB", "R2024a"),
 					Version:    "R2024a",
 				},
 			},
-			expected: "/usr/local/MATLAB/R2023b",
+			expected: filepath.Join("usr", "local", "MATLAB", "R2023b"),
 		},
 		{
 			name: "Windows paths",
 			environments: []entities.EnvironmentInfo{
 				{
-					MATLABRoot: "C:\\Program Files\\MATLAB\\R2024b",
+					MATLABRoot: filepath.Join("C:", "Program Files", "MATLAB", "R2024b"),
 					Version:    "R2024b",
 				},
 				{
-					MATLABRoot: "C:\\Program Files\\MATLAB\\R2024a",
+					MATLABRoot: filepath.Join("C:", "Program Files", "MATLAB", "R2024a"),
 					Version:    "R2024a",
 				},
 			},
-			expected: "C:\\Program Files\\MATLAB\\R2024b",
+			expected: filepath.Join("C:", "Program Files", "MATLAB", "R2024b"),
 		},
 	}
 
@@ -98,7 +99,7 @@ func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_HappyPath(t *testing.
 				Once()
 
 			mockMATLABManager.EXPECT().
-				ListEnvironments(ctx, mockLogger).
+				ListEnvironments(ctx, mockLogger.AsMockArg()).
 				Return(tc.environments).
 				Once()
 
@@ -126,11 +127,11 @@ func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_PreferredMATLABRootSe
 
 	ctx := t.Context()
 
-	mockPreferredMATLABRoot := "/usr/local/MATLAB/R2024b"
+	expectedPreferredMATLABRoot := filepath.Join("usr", "local", "MATLAB", "R2024b")
 
 	mockConfig.EXPECT().
 		PreferredLocalMATLABRoot().
-		Return(mockPreferredMATLABRoot).
+		Return(expectedPreferredMATLABRoot).
 		Once()
 
 	selector := matlabrootselector.New(mockConfig, mockMATLABManager)
@@ -140,7 +141,7 @@ func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_PreferredMATLABRootSe
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, mockPreferredMATLABRoot, result)
+	assert.Equal(t, expectedPreferredMATLABRoot, result)
 }
 
 func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_ListEnvironmentsEmpty(t *testing.T) {
@@ -177,7 +178,7 @@ func TestMATLABRootSelector_SelectFirstMATLABVersionOnPath_ListEnvironmentsEmpty
 				Once()
 
 			mockMATLABManager.EXPECT().
-				ListEnvironments(ctx, mockLogger).
+				ListEnvironments(ctx, mockLogger.AsMockArg()).
 				Return(tc.environments).
 				Once()
 

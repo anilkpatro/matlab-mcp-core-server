@@ -11,6 +11,7 @@ import (
 )
 
 func TestNew_HappyPath(t *testing.T) {
+	// Arrange
 	mockMATLABManager := &mocks.MockMATLABManager{}
 	defer mockMATLABManager.AssertExpectations(t)
 

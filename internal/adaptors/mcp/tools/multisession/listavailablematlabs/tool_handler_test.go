@@ -17,13 +17,13 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -39,11 +39,10 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	mockEnvironments := []entities.EnvironmentInfo{
 		{
 			MATLABRoot: "/path/to/matlab/R2023a",
@@ -54,14 +53,13 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 			Version:    "R2022b",
 		},
 	}
-
 	ctx := t.Context()
+	inputs := listavailablematlabs.Args{}
+
 	mockUsecase.EXPECT().
 		Execute(ctx, mockLogger.AsMockArg()).
 		Return(mockEnvironments).
 		Once()
-
-	inputs := listavailablematlabs.Args{}
 
 	// Act
 	result, err := listavailablematlabs.Handler(mockUsecase)(ctx, mockLogger, inputs)
@@ -81,11 +79,10 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_EmptyList(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	mockEnvironments := []entities.EnvironmentInfo{}
 
 	mockUsecase.EXPECT().

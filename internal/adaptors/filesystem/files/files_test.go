@@ -33,13 +33,14 @@ func TestFactory_CreateFileWithUniqueSuffix_HappyPath(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := filepath.Join("/tmp")
+	expectedDir := filepath.Join("tmp", "dir")
 	pattern := "testfile"
-	expectedFileName := filepath.Join("/tmp/testfile-12345")
-	expectedSuffix := "12345"
+	expectedTempPattern := "testfile-*"
+	expectedFileName := filepath.Join("tmp", "dir", "testfile-1337")
+	expectedSuffix := "1337"
 
 	mockOSLayer.EXPECT().
-		CreateTemp(dir, "testfile-*").
+		CreateTemp(expectedDir, expectedTempPattern).
 		Return(mockFile, nil).
 		Once()
 
@@ -56,7 +57,7 @@ func TestFactory_CreateFileWithUniqueSuffix_HappyPath(t *testing.T) {
 	factory := files.NewFactory(mockOSLayer)
 
 	// Act
-	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(dir, pattern), "")
+	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(expectedDir, pattern), "")
 
 	// Assert
 	require.NoError(t, err, "CreateFileWithUniqueSuffix should not return an error")
@@ -72,13 +73,14 @@ func TestFactory_CreateFileWithUniqueSuffix_PatternAlreadyHasSeparator(t *testin
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := filepath.Join("/tmp")
+	expectedDir := filepath.Join("tmp", "dir")
 	pattern := "testfile-"
-	expectedFileName := filepath.Join("/tmp/testfile-67890")
-	expectedSuffix := "67890"
+	expectedTempPattern := "testfile-*"
+	expectedFileName := filepath.Join("tmp", "dir", "testfile-1337")
+	expectedSuffix := "1337"
 
 	mockOSLayer.EXPECT().
-		CreateTemp(dir, "testfile-*").
+		CreateTemp(expectedDir, expectedTempPattern).
 		Return(mockFile, nil).
 		Once()
 
@@ -95,7 +97,7 @@ func TestFactory_CreateFileWithUniqueSuffix_PatternAlreadyHasSeparator(t *testin
 	factory := files.NewFactory(mockOSLayer)
 
 	// Act
-	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(dir, pattern), "")
+	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(expectedDir, pattern), "")
 
 	// Assert
 	require.NoError(t, err, "CreateFileWithUniqueSuffix should not return an error")
@@ -111,14 +113,15 @@ func TestFactory_CreateFileWithUniqueSuffix_FileWithExtension(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := filepath.Join("/var/log/app")
+	expectedDir := filepath.Join("var", "log", "app")
 	pattern := "logfile"
 	extension := ".log"
-	expectedFileName := filepath.Join("/var/log/app/logfile-999.log")
-	expectedSuffix := "999"
+	expectedTempPattern := "logfile-*.log"
+	expectedFileName := filepath.Join("var", "log", "app", "logfile-1337.log")
+	expectedSuffix := "1337"
 
 	mockOSLayer.EXPECT().
-		CreateTemp(dir, "logfile-*.log").
+		CreateTemp(expectedDir, expectedTempPattern).
 		Return(mockFile, nil).
 		Once()
 
@@ -135,7 +138,7 @@ func TestFactory_CreateFileWithUniqueSuffix_FileWithExtension(t *testing.T) {
 	factory := files.NewFactory(mockOSLayer)
 
 	// Act
-	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(dir, pattern), extension)
+	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(expectedDir, pattern), extension)
 
 	// Assert
 	require.NoError(t, err, "CreateFileWithUniqueSuffix should not return an error")
@@ -148,19 +151,20 @@ func TestFactory_CreateFileWithUniqueSuffix_CreateTempError(t *testing.T) {
 	mockOSLayer := &filesmock.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
-	dir := filepath.Join("/tmp")
+	expectedDir := filepath.Join("tmp", "dir")
 	pattern := "testfile"
+	expectedTempPattern := "testfile-*"
 	expectedError := assert.AnError
 
 	mockOSLayer.EXPECT().
-		CreateTemp(dir, "testfile-*").
+		CreateTemp(expectedDir, expectedTempPattern).
 		Return(nil, expectedError).
 		Once()
 
 	factory := files.NewFactory(mockOSLayer)
 
 	// Act
-	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(dir, pattern), "")
+	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(expectedDir, pattern), "")
 
 	// Assert
 	require.ErrorIs(t, err, expectedError, "Error should be the CreateTemp error")
@@ -176,12 +180,13 @@ func TestFactory_CreateFileWithUniqueSuffix_CloseError(t *testing.T) {
 	mockFile := &osfacademocks.MockFile{}
 	defer mockFile.AssertExpectations(t)
 
-	dir := filepath.Join("/tmp")
+	expectedDir := filepath.Join("tmp", "dir")
 	pattern := "testfile"
+	expectedTempPattern := "testfile-*"
 	expectedError := assert.AnError
 
 	mockOSLayer.EXPECT().
-		CreateTemp(dir, "testfile-*").
+		CreateTemp(expectedDir, expectedTempPattern).
 		Return(mockFile, nil).
 		Once()
 
@@ -193,7 +198,7 @@ func TestFactory_CreateFileWithUniqueSuffix_CloseError(t *testing.T) {
 	factory := files.NewFactory(mockOSLayer)
 
 	// Act
-	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(dir, pattern), "")
+	fileName, suffix, err := factory.CreateFileWithUniqueSuffix(filepath.Join(expectedDir, pattern), "")
 
 	// Assert
 	require.ErrorIs(t, err, expectedError, "Error should be the Close error")
@@ -208,10 +213,10 @@ func TestFactory_FilenameWithSuffix_RegularFile(t *testing.T) {
 
 	factory := files.NewFactory(mockOSLayer)
 
-	fileName := "/path/to/file"
+	fileName := filepath.Join("path", "to", "file")
 	extension := ".txt"
-	suffix := "12345"
-	expectedResult := "/path/to/file-12345.txt"
+	suffix := "1337"
+	expectedResult := filepath.Join("path", "to", "file-1337.txt")
 
 	// Act
 	result := factory.FilenameWithSuffix(fileName, extension, suffix)
@@ -227,9 +232,9 @@ func TestFactory_FilenameWithSuffix_HiddenFile(t *testing.T) {
 
 	factory := files.NewFactory(mockOSLayer)
 
-	fileName := "/path/to/.hiddenfile"
-	suffix := "67890"
-	expectedResult := "/path/to/.hiddenfile-67890"
+	fileName := filepath.Join("path", "to", ".hiddenfile")
+	suffix := "1337"
+	expectedResult := filepath.Join("path", "to", ".hiddenfile-1337")
 
 	// Act
 	result := factory.FilenameWithSuffix(fileName, "", suffix)
@@ -245,9 +250,9 @@ func TestFactory_FilenameWithSuffix_FileWithoutExtension(t *testing.T) {
 
 	factory := files.NewFactory(mockOSLayer)
 
-	fileName := "/path/to/file"
+	fileName := filepath.Join("path", "to", "file")
 	suffix := "abc"
-	expectedResult := "/path/to/file-abc"
+	expectedResult := filepath.Join("path", "to", "file-abc")
 
 	// Act
 	result := factory.FilenameWithSuffix(fileName, "", suffix)

@@ -45,9 +45,13 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 
 	usecaseRequest := runmatlabfile.Args{ScriptPath: scriptPath}
 
-	cdRequest := entities.EvalRequest{Code: fmt.Sprintf("cd('%s')", scriptDir)}
+	expectedCdRequest := entities.EvalRequest{
+		Code: fmt.Sprintf("cd('%s')", scriptDir),
+	}
 
-	evalRequest := entities.EvalRequest{Code: fileName}
+	expectedEvalRequest := entities.EvalRequest{
+		Code: fileName,
+	}
 
 	expectedResponse := entities.EvalResponse{
 		ConsoleOutput: "Hello, World!",
@@ -60,12 +64,12 @@ func TestUsecase_Execute_HappyPath(t *testing.T) {
 		Once()
 
 	mockClient.EXPECT().
-		Eval(ctx, mockLogger.AsMockArg(), cdRequest).
+		Eval(ctx, mockLogger.AsMockArg(), expectedCdRequest).
 		Return(entities.EvalResponse{}, nil).
 		Once()
 
 	mockClient.EXPECT().
-		Eval(ctx, mockLogger.AsMockArg(), evalRequest).
+		Eval(ctx, mockLogger.AsMockArg(), expectedEvalRequest).
 		Return(expectedResponse, nil).
 		Once()
 
@@ -130,7 +134,9 @@ func TestUsecase_Execute_CdEvalError(t *testing.T) {
 
 	usecaseRequest := runmatlabfile.Args{ScriptPath: scriptPath}
 
-	cdRequest := entities.EvalRequest{Code: fmt.Sprintf("cd('%s')", scriptDir)}
+	expectedCdRequest := entities.EvalRequest{
+		Code: fmt.Sprintf("cd('%s')", scriptDir),
+	}
 
 	mockPathValidator.EXPECT().
 		ValidateMATLABScript(scriptPath).
@@ -138,7 +144,7 @@ func TestUsecase_Execute_CdEvalError(t *testing.T) {
 		Once()
 
 	mockClient.EXPECT().
-		Eval(ctx, mockLogger.AsMockArg(), cdRequest).
+		Eval(ctx, mockLogger.AsMockArg(), expectedCdRequest).
 		Return(entities.EvalResponse{}, expectedError).
 		Once()
 
@@ -170,9 +176,13 @@ func TestUsecase_Execute_RunMATLABFileEvalError(t *testing.T) {
 
 	usecaseRequest := runmatlabfile.Args{ScriptPath: scriptPath}
 
-	cdRequest := entities.EvalRequest{Code: fmt.Sprintf("cd('%s')", scriptDir)}
+	expectedCdRequest := entities.EvalRequest{
+		Code: fmt.Sprintf("cd('%s')", scriptDir),
+	}
 
-	evalRequest := entities.EvalRequest{Code: fileName}
+	expectedEvalRequest := entities.EvalRequest{
+		Code: fileName,
+	}
 
 	mockPathValidator.EXPECT().
 		ValidateMATLABScript(scriptPath).
@@ -180,12 +190,12 @@ func TestUsecase_Execute_RunMATLABFileEvalError(t *testing.T) {
 		Once()
 
 	mockClient.EXPECT().
-		Eval(ctx, mockLogger.AsMockArg(), cdRequest).
+		Eval(ctx, mockLogger.AsMockArg(), expectedCdRequest).
 		Return(entities.EvalResponse{}, nil).
 		Once()
 
 	mockClient.EXPECT().
-		Eval(ctx, mockLogger.AsMockArg(), evalRequest).
+		Eval(ctx, mockLogger.AsMockArg(), expectedEvalRequest).
 		Return(entities.EvalResponse{}, expectedError).
 		Once()
 

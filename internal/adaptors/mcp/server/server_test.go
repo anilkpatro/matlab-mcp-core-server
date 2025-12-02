@@ -36,14 +36,14 @@ func TestNew_HappyPath(t *testing.T) {
 	mockServerConfig := &mocks.MockServerConfig{}
 	defer mockServerConfig.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
+
 	mockServerConfig.EXPECT().
 		Version().
 		Return("1.0.0").
 		Once()
 
-	mockLogger := testutils.NewInspectableLogger()
-
-	mcpserver := server.NewMCPSDKServer(mockServerConfig)
+	expectedMCPServer := server.NewMCPSDKServer(mockServerConfig)
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -56,17 +56,17 @@ func TestNew_HappyPath(t *testing.T) {
 		Once()
 
 	mockFirstTool.EXPECT().
-		AddToServer(mcpserver).
+		AddToServer(expectedMCPServer).
 		Return(nil).
 		Once()
 
 	mockSecondTool.EXPECT().
-		AddToServer(mcpserver).
+		AddToServer(expectedMCPServer).
 		Return(nil).
 		Once()
 
 	// Act
-	server, err := server.New(mcpserver, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
+	server, err := server.New(expectedMCPServer, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
 
 	// Assert
 	require.NoError(t, err, "New should not return an error")
@@ -90,14 +90,15 @@ func TestNew_AddToServerReturnsError(t *testing.T) {
 	mockServerConfig := &mocks.MockServerConfig{}
 	defer mockServerConfig.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
+	expectedError := assert.AnError
+
 	mockServerConfig.EXPECT().
 		Version().
 		Return("1.0.0").
 		Once()
 
-	mockLogger := testutils.NewInspectableLogger()
-
-	mcpserver := server.NewMCPSDKServer(mockServerConfig)
+	expectedMCPServer := server.NewMCPSDKServer(mockServerConfig)
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -109,15 +110,13 @@ func TestNew_AddToServerReturnsError(t *testing.T) {
 		Return([]tools.Tool{mockTool}).
 		Once()
 
-	expectedError := assert.AnError
-
 	mockTool.EXPECT().
-		AddToServer(mcpserver).
+		AddToServer(expectedMCPServer).
 		Return(expectedError).
 		Once()
 
 	// Act
-	server, err := server.New(mcpserver, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
+	server, err := server.New(expectedMCPServer, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
 
 	// Assert
 	require.Error(t, err, "New should return an error")
@@ -139,14 +138,14 @@ func TestNew_HandlesNoTools(t *testing.T) {
 	mockServerConfig := &mocks.MockServerConfig{}
 	defer mockServerConfig.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
+
 	mockServerConfig.EXPECT().
 		Version().
 		Return("1.0.0").
 		Once()
 
-	mockLogger := testutils.NewInspectableLogger()
-
-	mcpserver := server.NewMCPSDKServer(mockServerConfig)
+	expectedMCPServer := server.NewMCPSDKServer(mockServerConfig)
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -159,7 +158,7 @@ func TestNew_HandlesNoTools(t *testing.T) {
 		Once()
 
 	// Act
-	server, err := server.New(mcpserver, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
+	server, err := server.New(expectedMCPServer, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
 
 	// Assert
 	require.NoError(t, err, "New should not return an error")
@@ -180,14 +179,14 @@ func TestServer_Run_HappyPath(t *testing.T) {
 	mockServerConfig := &mocks.MockServerConfig{}
 	defer mockServerConfig.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
+
 	mockServerConfig.EXPECT().
 		Version().
 		Return("1.0.0").
 		Once()
 
-	mockLogger := testutils.NewInspectableLogger()
-
-	mcpserver := server.NewMCPSDKServer(mockServerConfig)
+	expectedMCPServer := server.NewMCPSDKServer(mockServerConfig)
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -208,7 +207,7 @@ func TestServer_Run_HappyPath(t *testing.T) {
 		Return().
 		Once()
 
-	server, err := server.New(mcpserver, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
+	server, err := server.New(expectedMCPServer, mockLoggerFactory, mockLifecycleSignaler, mockConfigurator)
 	require.NoError(t, err)
 
 	// The MCP STDIO transport will hijack os.Stdout, which will cause issues with code coverage reporting.

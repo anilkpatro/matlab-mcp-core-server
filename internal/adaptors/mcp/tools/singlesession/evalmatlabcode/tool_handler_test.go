@@ -18,8 +18,6 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
@@ -28,6 +26,8 @@ func TestNew_HappyPath(t *testing.T) {
 
 	mockGlobalMATLAB := &entitiesmocks.MockGlobalMATLAB{}
 	defer mockGlobalMATLAB.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -43,8 +43,6 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -54,12 +52,17 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const code = "disp('Hello, World!')"
 	const projectPath = "/some/path"
 	expectedResponse := entities.EvalResponse{
 		ConsoleOutput: "Hello, World!",
 		Images:        [][]byte{[]byte("image1"), []byte("image2")},
+	}
+	args := evalmatlabcode.Args{
+		Code:        code,
+		ProjectPath: projectPath,
 	}
 
 	mockGlobalMATLAB.EXPECT().
@@ -80,11 +83,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 		Return(expectedResponse, nil).
 		Once()
 
-	args := evalmatlabcode.Args{
-		Code:        code,
-		ProjectPath: projectPath,
-	}
-
 	// Act
 	result, err := evalmatlabcode.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
@@ -101,8 +99,6 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -112,20 +108,20 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const code = "invalid code"
 	const projectPath = "/some/path"
 	expectedError := assert.AnError
+	args := evalmatlabcode.Args{
+		Code:        code,
+		ProjectPath: projectPath,
+	}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
 		Return(nil, expectedError).
 		Once()
-
-	args := evalmatlabcode.Args{
-		Code:        code,
-		ProjectPath: projectPath,
-	}
 
 	// Act
 	result, err := evalmatlabcode.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
@@ -137,8 +133,6 @@ func TestTool_Handler_ClientReturnsError(t *testing.T) {
 
 func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -148,10 +142,15 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const code = "invalid code"
 	const projectPath = "/some/path"
 	expectedError := assert.AnError
+	args := evalmatlabcode.Args{
+		Code:        code,
+		ProjectPath: projectPath,
+	}
 
 	mockGlobalMATLAB.EXPECT().
 		Client(ctx, mockLogger.AsMockArg()).
@@ -171,11 +170,6 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 		Return(entities.EvalResponse{}, expectedError).
 		Once()
 
-	args := evalmatlabcode.Args{
-		Code:        code,
-		ProjectPath: projectPath,
-	}
-
 	// Act
 	result, err := evalmatlabcode.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
@@ -186,8 +180,6 @@ func TestTool_Handler_UsecaseReturnsError(t *testing.T) {
 
 func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
@@ -197,6 +189,7 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 	mockMATLABSessionClient := &entitiesmocks.MockMATLABSessionClient{}
 	defer mockMATLABSessionClient.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const code = "% Empty comment"
 	const projectPath = "/some/path"
@@ -204,6 +197,10 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 	emptyResponse := entities.EvalResponse{
 		ConsoleOutput: "",
 		Images:        nil,
+	}
+	args := evalmatlabcode.Args{
+		Code:        code,
+		ProjectPath: projectPath,
 	}
 
 	mockGlobalMATLAB.EXPECT().
@@ -225,10 +222,6 @@ func TestTool_Handler_UsecaseReturnsEmptyResponse(t *testing.T) {
 		Once()
 
 	// Act
-	args := evalmatlabcode.Args{
-		Code:        code,
-		ProjectPath: projectPath,
-	}
 	result, err := evalmatlabcode.Handler(mockUsecase, mockGlobalMATLAB)(ctx, mockLogger, args)
 
 	// Assert

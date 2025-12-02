@@ -215,7 +215,11 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	testPID := 12345
+	debugMessageC := make(chan string)
+	defer close(debugMessageC)
+	errorMessageC := make(chan string)
+	defer close(errorMessageC)
+	expectedPID := 12345
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -238,7 +242,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 		Once()
 
 	mockTransportClient.EXPECT().
-		SendProcessPID(testPID).
+		SendProcessPID(expectedPID).
 		Return(nil).
 		Once()
 
@@ -253,7 +257,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_HappyPath(t *testing.T) {
 	require.NoError(t, err, "Start should not return an error")
 
 	// Act
-	err = watchdogInstance.RegisterProcessPIDWithWatchdog(testPID)
+	err = watchdogInstance.RegisterProcessPIDWithWatchdog(expectedPID)
 
 	// Assert
 	require.NoError(t, err, "RegisterProcessPIDWithWatchdog should not return an error")
@@ -278,7 +282,11 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	testPID := 12345
+	debugMessageC := make(chan string)
+	defer close(debugMessageC)
+	errorMessageC := make(chan string)
+	defer close(errorMessageC)
+	expectedPID := 12345
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -301,7 +309,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 		Once()
 
 	mockTransportClient.EXPECT().
-		SendProcessPID(testPID).
+		SendProcessPID(expectedPID).
 		Return(nil).
 		Once()
 
@@ -314,7 +322,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_WaitsIfNotStarted(t *testing.T)
 	// Act & Assert
 	errC := make(chan error)
 	go func() {
-		errC <- watchdogInstance.RegisterProcessPIDWithWatchdog(testPID)
+		errC <- watchdogInstance.RegisterProcessPIDWithWatchdog(expectedPID)
 	}()
 
 	select {
@@ -350,7 +358,11 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 	mockTransportClient := &transportmocks.MockClient{}
 	defer mockTransportClient.AssertExpectations(t)
 
-	testPID := 12345
+	debugMessageC := make(chan string)
+	defer close(debugMessageC)
+	errorMessageC := make(chan string)
+	defer close(errorMessageC)
+	expectedPID := 12345
 	expectedError := assert.AnError
 
 	mockLoggerFactory.EXPECT().
@@ -374,7 +386,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 		Once()
 
 	mockTransportClient.EXPECT().
-		SendProcessPID(testPID).
+		SendProcessPID(expectedPID).
 		Return(expectedError).
 		Once()
 
@@ -389,7 +401,7 @@ func TestWatchdog_RegisterProcessPIDWithWatchdog_SendProcessPIDError(t *testing.
 	require.NoError(t, err, "Start should not return an error")
 
 	// Act
-	err = watchdogInstance.RegisterProcessPIDWithWatchdog(testPID)
+	err = watchdogInstance.RegisterProcessPIDWithWatchdog(expectedPID)
 
 	// Assert
 	assert.ErrorIs(t, err, expectedError, "Error should be the SendProcessPID error")

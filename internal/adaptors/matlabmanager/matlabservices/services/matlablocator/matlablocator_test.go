@@ -3,6 +3,7 @@
 package matlablocator_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/matlabmanager/matlabservices/datatypes"
@@ -24,23 +25,23 @@ func TestService_ListDiscoveredMatlabInfo_SingleMatlab(t *testing.T) {
 	defer mockMATLABVersionGetter.AssertExpectations(t)
 
 	// Mock discovery service to return MATLAB locations
-	const dummyPathToMATLAB = "/path/to/matlab/R2023a"
+	expectedPathToMATLAB := filepath.Join("path", "to", "matlab", "R2023a")
 	mockMATLABRootGetter.EXPECT().
 		GetAll(mockLogger).
 		Return([]string{
-			dummyPathToMATLAB,
+			expectedPathToMATLAB,
 		}).
 		Once()
 
 	// Mock version service to return version info
-	dummyMatlabVersionInfo := datatypes.MatlabVersionInfo{
+	expectedMatlabVersionInfo := datatypes.MatlabVersionInfo{
 		ReleaseFamily: "R2023a",
 		ReleasePhase:  "release",
 		UpdateLevel:   0,
 	}
 	mockMATLABVersionGetter.EXPECT().
-		Get(dummyPathToMATLAB).
-		Return(dummyMatlabVersionInfo, nil).
+		Get(expectedPathToMATLAB).
+		Return(expectedMatlabVersionInfo, nil).
 		Once()
 
 	service := matlablocator.New(mockMATLABRootGetter, mockMATLABVersionGetter)
@@ -53,8 +54,8 @@ func TestService_ListDiscoveredMatlabInfo_SingleMatlab(t *testing.T) {
 	require.Len(t, result.MatlabInfo, 1)
 
 	// Verify the MATLAB info
-	assert.Equal(t, dummyPathToMATLAB, result.MatlabInfo[0].Location)
-	assert.Equal(t, dummyMatlabVersionInfo, result.MatlabInfo[0].Version)
+	assert.Equal(t, expectedPathToMATLAB, result.MatlabInfo[0].Location)
+	assert.Equal(t, expectedMatlabVersionInfo, result.MatlabInfo[0].Version)
 }
 
 func TestService_ListDiscoveredMatlabInfo_MultipleMatlabs(t *testing.T) {
@@ -67,17 +68,17 @@ func TestService_ListDiscoveredMatlabInfo_MultipleMatlabs(t *testing.T) {
 	mockMATLABVersionGetter := &mocks.MockMATLABVersionGetter{}
 	defer mockMATLABVersionGetter.AssertExpectations(t)
 
-	dummyPaths := []string{
-		"C:\\Program Files\\MATLAB\\R2023a",
-		"C:\\Program Files\\MATLAB\\R2022b",
+	expectedPaths := []string{
+		filepath.Join("Program Files", "MATLAB", "R2023a"),
+		filepath.Join("Program Files", "MATLAB", "R2022b"),
 	}
-	dummyMatlabInfos := map[string]datatypes.MatlabVersionInfo{
-		dummyPaths[0]: {
+	expectedMatlabInfos := map[string]datatypes.MatlabVersionInfo{
+		expectedPaths[0]: {
 			ReleaseFamily: "R2023a",
 			ReleasePhase:  "release",
 			UpdateLevel:   1,
 		},
-		dummyPaths[1]: {
+		expectedPaths[1]: {
 			ReleaseFamily: "R2022b",
 			ReleasePhase:  "release",
 			UpdateLevel:   2,
@@ -87,14 +88,14 @@ func TestService_ListDiscoveredMatlabInfo_MultipleMatlabs(t *testing.T) {
 	// Mock discovery service to return multiple MATLAB locations
 	mockMATLABRootGetter.EXPECT().
 		GetAll(mockLogger).
-		Return(dummyPaths).
+		Return(expectedPaths).
 		Once()
 
 	// Mock version service to return version info for each MATLAB
-	for _, path := range dummyPaths {
+	for _, path := range expectedPaths {
 		mockMATLABVersionGetter.EXPECT().
 			Get(path).
-			Return(dummyMatlabInfos[path], nil).
+			Return(expectedMatlabInfos[path], nil).
 			Once()
 	}
 
@@ -105,13 +106,13 @@ func TestService_ListDiscoveredMatlabInfo_MultipleMatlabs(t *testing.T) {
 
 	// Assert
 	require.NotNil(t, result)
-	require.Len(t, result.MatlabInfo, len(dummyPaths))
+	require.Len(t, result.MatlabInfo, len(expectedPaths))
 
-	for i := range dummyPaths {
-		path := dummyPaths[i]
-		expectedInfo := dummyMatlabInfos[path]
+	for i := range expectedPaths {
+		expectedPath := expectedPaths[i]
+		expectedInfo := expectedMatlabInfos[expectedPath]
 
-		assert.Equal(t, path, result.MatlabInfo[i].Location)
+		assert.Equal(t, expectedPath, result.MatlabInfo[i].Location)
 		assert.Equal(t, expectedInfo.ReleaseFamily, result.MatlabInfo[i].Version.ReleaseFamily)
 		assert.Equal(t, expectedInfo.ReleasePhase, result.MatlabInfo[i].Version.ReleasePhase)
 		assert.Equal(t, expectedInfo.UpdateLevel, result.MatlabInfo[i].Version.UpdateLevel)
@@ -158,14 +159,14 @@ func TestService_ListDiscoveredMatlabInfo_VersionServiceError(t *testing.T) {
 	mockMATLABRootGetter.EXPECT().
 		GetAll(mockLogger).
 		Return([]string{
-			"/path/to/matlab/R2023a",
+			filepath.Join("path", "to", "matlab", "R2023a"),
 		}).
 		Once()
 
 	// Mock version service to return an error
 	expectedError := assert.AnError
 	mockMATLABVersionGetter.EXPECT().
-		Get("/path/to/matlab/R2023a").
+		Get(filepath.Join("path", "to", "matlab", "R2023a")).
 		Return(datatypes.MatlabVersionInfo{}, expectedError).
 		Once()
 

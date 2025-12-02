@@ -3,6 +3,7 @@
 package matlabmanager_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/matlabmanager"
@@ -26,15 +27,15 @@ func TestMATLABManager_ListEnvironments_HappyPath(t *testing.T) {
 	mockClientFactory := &mocks.MockMATLABSessionClientFactory{}
 	defer mockClientFactory.AssertExpectations(t)
 
-	dummyMatlabInfos := []datatypes.MatlabInfo{{
-		Location: "/path/to/matlab/R2023a",
+	expectedMatlabInfos := []datatypes.MatlabInfo{{
+		Location: filepath.Join("path", "to", "matlab", "R2023a"),
 		Version: datatypes.MatlabVersionInfo{
 			ReleaseFamily: "R2023a",
 			ReleasePhase:  "release",
 			UpdateLevel:   0,
 		},
 	}, {
-		Location: "/path/to/matlab/R2022b",
+		Location: filepath.Join("path", "to", "matlab", "R2022b"),
 		Version: datatypes.MatlabVersionInfo{
 			ReleaseFamily: "R2022b",
 			ReleasePhase:  "release",
@@ -44,7 +45,7 @@ func TestMATLABManager_ListEnvironments_HappyPath(t *testing.T) {
 	}
 
 	mockResponse := datatypes.ListMatlabInfo{
-		MatlabInfo: dummyMatlabInfos,
+		MatlabInfo: expectedMatlabInfos,
 	}
 	mockMATLABManager.EXPECT().
 		ListDiscoveredMatlabInfo(mockLogger.AsMockArg()).
@@ -61,9 +62,9 @@ func TestMATLABManager_ListEnvironments_HappyPath(t *testing.T) {
 	require.Len(t, result, 2)
 
 	// Verify the outputs match the mock data
-	for i := range dummyMatlabInfos {
-		assert.Equal(t, dummyMatlabInfos[i].Location, result[i].MATLABRoot, "Output MATLAB root does not match input dummy data")
-		assert.Equal(t, dummyMatlabInfos[i].Version.ReleaseFamily, result[i].Version, "Output MATLAB version does not match input dummy data")
+	for i := range expectedMatlabInfos {
+		assert.Equal(t, expectedMatlabInfos[i].Location, result[i].MATLABRoot, "Output MATLAB root does not match input dummy data")
+		assert.Equal(t, expectedMatlabInfos[i].Version.ReleaseFamily, result[i].Version, "Output MATLAB version does not match input dummy data")
 	}
 }
 
@@ -84,7 +85,7 @@ func TestMATLABManager_ListEnvironments_EmptyList(t *testing.T) {
 		MatlabInfo: []datatypes.MatlabInfo{},
 	}
 	mockMATLABManager.EXPECT().
-		ListDiscoveredMatlabInfo(mockLogger).
+		ListDiscoveredMatlabInfo(mockLogger.AsMockArg()).
 		Return(mockResponse).
 		Once()
 

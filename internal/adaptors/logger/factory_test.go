@@ -52,7 +52,7 @@ func TestNewFactory_HappyPath(t *testing.T) {
 				Return(expectedBaseDir).
 				Once()
 
-			expectedSuffix := "123"
+			expectedSuffix := "1337"
 			mockDirectory.EXPECT().
 				ID().
 				Return(expectedSuffix).
@@ -110,7 +110,7 @@ func TestNewFactory_LogFileCreateError(t *testing.T) {
 		Return(expectedBaseDir).
 		Once()
 
-	expectedSuffix := "123"
+	expectedSuffix := "1337"
 	mockDirectory.EXPECT().
 		ID().
 		Return(expectedSuffix).
@@ -193,7 +193,7 @@ func TestFactory_NewMCPSessionLogger_HappyPath(t *testing.T) {
 		Return(expectedBaseDir).
 		Once()
 
-	expectedSuffix := "123"
+	expectedSuffix := "1337"
 	mockDirectory.EXPECT().
 		ID().
 		Return(expectedSuffix).
@@ -251,7 +251,7 @@ func TestFactory_GetGlobalLogger_HappyPath(t *testing.T) {
 		Return(expectedBaseDir).
 		Once()
 
-	expectedSuffix := "123"
+	expectedSuffix := "1337"
 	mockDirectory.EXPECT().
 		ID().
 		Return(expectedSuffix).
@@ -309,7 +309,7 @@ func TestFactory_GetGlobalLogger_UsesWatchdogLogFileInWatchdogMode(t *testing.T)
 		Return(expectedBaseDir).
 		Once()
 
-	expectedSuffix := "123"
+	expectedSuffix := "1337"
 	mockDirectory.EXPECT().
 		ID().
 		Return(expectedSuffix).
@@ -367,7 +367,7 @@ func TestFactory_GetGlobalLogger_IsSingleton(t *testing.T) {
 		Return(expectedBaseDir).
 		Once()
 
-	expectedSuffix := "123"
+	expectedSuffix := "1337"
 	mockDirectory.EXPECT().
 		ID().
 		Return(expectedSuffix).

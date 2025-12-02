@@ -357,11 +357,11 @@ func TestClient_DebugMessagesC_ReceivesMessages(t *testing.T) {
 		Return(mockStderr).
 		Once()
 
-	for _, expectedexpectedMessage := range expectedMessages {
+	for _, expectedMessage := range expectedMessages {
 		mockStdout.EXPECT().
 			Read(mock.Anything).
 			RunAndReturn(func(p []byte) (int, error) {
-				messageBytes := []byte(fmt.Sprintf("%s\n", expectedexpectedMessage))
+				messageBytes := []byte(fmt.Sprintf("%s\n", expectedMessage))
 				copy(p, messageBytes)
 				return len(messageBytes), nil
 			}).
@@ -444,11 +444,11 @@ func TestClient_ErrorMessagesC_ReceivesMessages(t *testing.T) {
 		Return(mockStderr).
 		Once()
 
-	for _, expectedexpectedMessage := range expectedMessages {
+	for _, expectedMessage := range expectedMessages {
 		mockStderr.EXPECT().
 			Read(mock.Anything).
 			RunAndReturn(func(p []byte) (int, error) {
-				messageBytes := []byte(fmt.Sprintf("%s\n", expectedexpectedMessage))
+				messageBytes := []byte(fmt.Sprintf("%s\n", expectedMessage))
 				copy(p, messageBytes)
 				return len(messageBytes), nil
 			}).

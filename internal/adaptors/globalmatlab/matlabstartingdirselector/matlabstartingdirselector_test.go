@@ -38,20 +38,20 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_HappyPath(t *testing.T) {
 		{
 			name:        "Windows",
 			os:          "windows",
-			homeDir:     "/Users/testuser",
-			expectedDir: filepath.Join("/Users/testuser", "Documents"),
+			homeDir:     filepath.Join("Users", "testuser"),
+			expectedDir: filepath.Join("Users", "testuser", "Documents"),
 		},
 		{
 			name:        "Darwin",
 			os:          "darwin",
-			homeDir:     "/Users/testuser",
-			expectedDir: filepath.Join("/Users/testuser", "Documents"),
+			homeDir:     filepath.Join("Users", "testuser"),
+			expectedDir: filepath.Join("Users", "testuser", "Documents"),
 		},
 		{
 			name:        "Linux",
 			os:          "linux",
-			homeDir:     "/home/testuser",
-			expectedDir: "/home/testuser",
+			homeDir:     filepath.Join("home", "testuser"),
+			expectedDir: filepath.Join("home", "testuser"),
 		},
 	}
 
@@ -110,15 +110,15 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_PreferredStartingDirectoryS
 	mockFileInfo := &osFacademocks.MockFileInfo{}
 	defer mockFileInfo.AssertExpectations(t)
 
-	mockPreferredMATLABStartingDir := "/custom/preferred/directory"
+	expectedPreferredMATLABStartingDir := filepath.Join("custom", "preferred", "directory")
 
 	mockConfig.EXPECT().
 		PreferredMATLABStartingDirectory().
-		Return(mockPreferredMATLABStartingDir).
+		Return(expectedPreferredMATLABStartingDir).
 		Once()
 
 	mockOSLayer.EXPECT().
-		Stat(mockPreferredMATLABStartingDir).
+		Stat(expectedPreferredMATLABStartingDir).
 		Return(mockFileInfo, nil).
 		Once()
 
@@ -129,7 +129,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_PreferredStartingDirectoryS
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, mockPreferredMATLABStartingDir, result)
+	assert.Equal(t, expectedPreferredMATLABStartingDir, result)
 }
 
 func TestMATLABStartingDirSelector_GetMatlabStartDir_UnknownOS_HappyPath(t *testing.T) {
@@ -145,7 +145,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_UnknownOS_HappyPath(t *test
 
 	selector := matlabstartingdirselector.New(mockConfig, mockOSLayer)
 
-	homeDir := "/home/testuser"
+	expectedHomeDir := filepath.Join("home", "testuser")
 	unknownOS := "freebsd"
 
 	mockConfig.EXPECT().
@@ -155,7 +155,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_UnknownOS_HappyPath(t *test
 
 	mockOSLayer.EXPECT().
 		UserHomeDir().
-		Return(homeDir, nil).
+		Return(expectedHomeDir, nil).
 		Once()
 
 	mockOSLayer.EXPECT().
@@ -164,7 +164,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_UnknownOS_HappyPath(t *test
 		Once()
 
 	mockOSLayer.EXPECT().
-		Stat(homeDir).
+		Stat(expectedHomeDir).
 		Return(mockFileInfo, nil).
 		Once()
 
@@ -173,7 +173,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_UnknownOS_HappyPath(t *test
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, homeDir, result)
+	assert.Equal(t, expectedHomeDir, result)
 }
 
 func TestMATLABStartingDirSelector_GetMatlabStartDir_UserHomeDirError(t *testing.T) {
@@ -214,17 +214,17 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_StatErrorOnHomeDir(t *testi
 		{
 			name:    "Windows - Stat Error",
 			os:      "windows",
-			homeDir: "C:\\Users\\testuser",
+			homeDir: filepath.Join("Users", "testuser"),
 		},
 		{
 			name:    "Darwin - Stat Error",
 			os:      "darwin",
-			homeDir: "/Users/testuser",
+			homeDir: filepath.Join("Users", "testuser"),
 		},
 		{
 			name:    "Linux - Stat Error",
 			os:      "linux",
-			homeDir: "/home/testuser",
+			homeDir: filepath.Join("home", "testuser"),
 		},
 	}
 
@@ -284,7 +284,7 @@ func TestMATLABStartingDirSelector_GetMatlabStartDir_StatErrorOnPreferredMATLABS
 	defer mockConfig.AssertExpectations(t)
 
 	selector := matlabstartingdirselector.New(mockConfig, mockOSLayer)
-	expectedPreferredMATLABStartingDir := "/some/path/that/doesnt/exist"
+	expectedPreferredMATLABStartingDir := filepath.Join("some", "path", "that", "doesnt", "exist")
 	expectedError := assert.AnError
 
 	mockConfig.EXPECT().

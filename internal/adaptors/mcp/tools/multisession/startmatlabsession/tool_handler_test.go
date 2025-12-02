@@ -17,13 +17,13 @@ import (
 
 func TestNew_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockLoggerFactory := &basetoolsmocks.MockLoggerFactory{}
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
+
+	mockLogger := testutils.NewInspectableLogger()
 
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
@@ -39,11 +39,10 @@ func TestNew_HappyPath(t *testing.T) {
 
 func TestTool_Handler_HappyPath(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const matlabRoot = "/path/to/matlab"
 	const expectedSessionID = entities.SessionID(123)
@@ -59,15 +58,14 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 		MATLABRoot:             matlabRoot,
 		IsStartingDirectorySet: false,
 	}
+	args := startmatlabsession.Args{
+		MATLABRoot: matlabRoot,
+	}
 
 	mockUsecase.EXPECT().
 		Execute(ctx, mockLogger.AsMockArg(), localSessionDetails).
 		Return(expectedResponse, nil).
 		Once()
-
-	args := startmatlabsession.Args{
-		MATLABRoot: matlabRoot,
-	}
 
 	// Act
 	result, err := startmatlabsession.Handler(mockUsecase)(ctx, mockLogger, args)
@@ -81,11 +79,10 @@ func TestTool_Handler_HappyPath(t *testing.T) {
 
 func TestTool_Handler_UsecaseError(t *testing.T) {
 	// Arrange
-	mockLogger := testutils.NewInspectableLogger()
-
 	mockUsecase := &mocks.MockUsecase{}
 	defer mockUsecase.AssertExpectations(t)
 
+	mockLogger := testutils.NewInspectableLogger()
 	ctx := t.Context()
 	const matlabRoot = "/path/to/matlab"
 	expectedError := assert.AnError
@@ -94,15 +91,14 @@ func TestTool_Handler_UsecaseError(t *testing.T) {
 		MATLABRoot:             matlabRoot,
 		IsStartingDirectorySet: false,
 	}
+	args := startmatlabsession.Args{
+		MATLABRoot: matlabRoot,
+	}
 
 	mockUsecase.EXPECT().
 		Execute(ctx, mockLogger.AsMockArg(), localSessionDetails).
 		Return(startmatlabsessionusecase.ReturnArgs{}, expectedError).
 		Once()
-
-	args := startmatlabsession.Args{
-		MATLABRoot: matlabRoot,
-	}
 
 	// Act
 	result, err := startmatlabsession.Handler(mockUsecase)(ctx, mockLogger, args)

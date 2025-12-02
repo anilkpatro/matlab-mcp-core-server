@@ -29,18 +29,18 @@ func TestMATLABManager_GetMATLABSessionClient_HappyPath(t *testing.T) {
 
 	mockSessionClient := &sessionstoremocks.MockMATLABSessionClientWithCleanup{}
 
-	sessionID := entities.SessionID(123)
+	expectedSessionID := entities.SessionID(123)
 	ctx := t.Context()
 
 	mockSessionStore.EXPECT().
-		Get(sessionID).
+		Get(expectedSessionID).
 		Return(mockSessionClient, nil).
 		Once()
 
 	manager := matlabmanager.New(mockMATLABServices, mockSessionStore, mockClientFactory)
 
 	// Act
-	client, err := manager.GetMATLABSessionClient(ctx, mockLogger, sessionID)
+	client, err := manager.GetMATLABSessionClient(ctx, mockLogger, expectedSessionID)
 
 	// Assert
 	require.NoError(t, err)
@@ -60,19 +60,19 @@ func TestMATLABManager_GetMATLABSessionClient_SessionStoreError(t *testing.T) {
 	mockClientFactory := &mocks.MockMATLABSessionClientFactory{}
 	defer mockClientFactory.AssertExpectations(t)
 
-	sessionID := entities.SessionID(123)
+	expectedSessionID := entities.SessionID(123)
 	ctx := t.Context()
 	expectedError := assert.AnError
 
 	mockSessionStore.EXPECT().
-		Get(sessionID).
+		Get(expectedSessionID).
 		Return(nil, expectedError).
 		Once()
 
 	manager := matlabmanager.New(mockMATLABServices, mockSessionStore, mockClientFactory)
 
 	// Act
-	client, err := manager.GetMATLABSessionClient(ctx, mockLogger, sessionID)
+	client, err := manager.GetMATLABSessionClient(ctx, mockLogger, expectedSessionID)
 
 	// Assert
 	require.ErrorIs(t, err, expectedError)

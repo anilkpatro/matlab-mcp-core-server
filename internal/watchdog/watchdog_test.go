@@ -85,7 +85,7 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 	mockStderr := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	parentPID := 1234
+	expectedParentPID := 1234
 
 	parentTerminationC := make(chan struct{})
 	interruptSignalC := make(chan os.Signal, 1)
@@ -120,7 +120,7 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 
 	mockOSLayer.EXPECT().
 		Getppid().
-		Return(parentPID).
+		Return(expectedParentPID).
 		Once()
 
 	mockReceiver.EXPECT().
@@ -134,7 +134,7 @@ func TestWatchdog_StartAndWatch_HappyPath(t *testing.T) {
 		Once()
 
 	mockProcessHandler.EXPECT().
-		WatchProcessAndGetTerminationChan(parentPID).
+		WatchProcessAndGetTerminationChan(expectedParentPID).
 		Return(parentTerminationC).
 		Once()
 
@@ -201,7 +201,7 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 	mockStderr := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	parentPID := 1234
+	expectedParentPID := 1234
 
 	parentTerminationC := make(chan struct{})
 	interruptSignalC := make(chan os.Signal, 1)
@@ -237,7 +237,7 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 
 	mockOSLayer.EXPECT().
 		Getppid().
-		Return(parentPID).
+		Return(expectedParentPID).
 		Once()
 
 	mockReceiver.EXPECT().
@@ -251,7 +251,7 @@ func TestWatchdog_StartAndWatch_MulitplePIDs(t *testing.T) {
 		Once()
 
 	mockProcessHandler.EXPECT().
-		WatchProcessAndGetTerminationChan(parentPID).
+		WatchProcessAndGetTerminationChan(expectedParentPID).
 		Return(parentTerminationC).
 		Once()
 
@@ -324,7 +324,7 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 	mockStderr := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	parentPID := 1234
+	expectedParentPID := 1234
 
 	parentTerminationC := make(chan struct{})
 	interruptSignalC := make(chan os.Signal, 1)
@@ -359,7 +359,7 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 
 	mockOSLayer.EXPECT().
 		Getppid().
-		Return(parentPID).
+		Return(expectedParentPID).
 		Once()
 
 	mockReceiver.EXPECT().
@@ -368,7 +368,7 @@ func TestWatchdog_StartAndWatch_ParentProcessTermination(t *testing.T) {
 		Once()
 
 	mockProcessHandler.EXPECT().
-		WatchProcessAndGetTerminationChan(parentPID).
+		WatchProcessAndGetTerminationChan(expectedParentPID).
 		Return(parentTerminationC).
 		Once()
 
@@ -435,7 +435,7 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 	mockStderr := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	parentPID := 1234
+	expectedParentPID := 1234
 
 	parentTerminationC := make(chan struct{})
 	interruptSignalC := make(chan os.Signal, 1)
@@ -470,7 +470,7 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 
 	mockOSLayer.EXPECT().
 		Getppid().
-		Return(parentPID).
+		Return(expectedParentPID).
 		Once()
 
 	mockReceiver.EXPECT().
@@ -479,7 +479,7 @@ func TestWatchdog_StartAndWatch_OSSignalInterrupt(t *testing.T) {
 		Once()
 
 	mockProcessHandler.EXPECT().
-		WatchProcessAndGetTerminationChan(parentPID).
+		WatchProcessAndGetTerminationChan(expectedParentPID).
 		Return(parentTerminationC).
 		Once()
 
@@ -546,7 +546,7 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 	mockStderr := &entitiesmocks.MockWriter{}
 	defer mockStdin.AssertExpectations(t)
 
-	parentPID := 1234
+	expectedParentPID := 1234
 
 	parentTerminationC := make(chan struct{})
 	interruptSignalC := make(chan os.Signal, 1)
@@ -584,7 +584,7 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 
 	mockOSLayer.EXPECT().
 		Getppid().
-		Return(parentPID).
+		Return(expectedParentPID).
 		Once()
 
 	mockReceiver.EXPECT().
@@ -598,7 +598,7 @@ func TestWatchdog_StartAndWatch_KillProcessError(t *testing.T) {
 		Once()
 
 	mockProcessHandler.EXPECT().
-		WatchProcessAndGetTerminationChan(parentPID).
+		WatchProcessAndGetTerminationChan(expectedParentPID).
 		Return(parentTerminationC).
 		Once()
 

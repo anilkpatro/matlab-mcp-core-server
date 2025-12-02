@@ -3,6 +3,7 @@
 package config_test
 
 import (
+	"path/filepath"
 	"runtime/debug"
 	"testing"
 
@@ -54,22 +55,22 @@ func TestNew_HappyPath(t *testing.T) {
 				"--disable-telemetry",
 				"--use-single-matlab-session=false",
 				"--log-level=debug",
-				"--matlab-root=/root",
-				"--initial-working-folder=/pref",
-				"--log-folder=/logs",
+				"--matlab-root=" + filepath.Join("tmp", "root"),
+				"--initial-working-folder=" + filepath.Join("tmp", "pref"),
+				"--log-folder=" + filepath.Join("tmp", "logs"),
 				"--watchdog=true",
-				"--server-instance-id=69878763",
+				"--server-instance-id=1337",
 			},
 			expected: expectedConfig{
 				versionMode:                      true,
 				disableTelemetry:                 true,
 				useSingleMATLABSession:           false,
 				logLevel:                         entities.LogLevelDebug,
-				preferredLocalMATLABRoot:         "/root",
-				preferredMATLABStartingDirectory: "/pref",
-				baseDirectory:                    "/logs",
+				preferredLocalMATLABRoot:         filepath.Join("tmp", "root"),
+				preferredMATLABStartingDirectory: filepath.Join("tmp", "pref"),
+				baseDirectory:                    filepath.Join("tmp", "logs"),
 				watchdogMode:                     true,
-				serverInstanceID:                 "69878763",
+				serverInstanceID:                 "1337",
 			},
 		},
 	}
@@ -80,9 +81,12 @@ func TestNew_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			// Act
@@ -113,19 +117,22 @@ func TestConfig_Version_VersionSetByLDFLAGS(t *testing.T) {
 	mockOSLayer := &configmocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
+	programName := "testprocess"
+	modulePath := "server.com/some/path/to/module"
+	ignoredVersion := "v0.0.0"
+	expectedFullVersion := modulePath + " " + expectedVersion
+
 	mockOSLayer.EXPECT().
 		Args().
-		Return([]string{"testprocess"}).
+		Return([]string{programName}).
 		Once()
 
-	expectedPath := "/some/path/to/module"
-	versionToNotBeUsed := "v0.0.0"
 	mockOSLayer.EXPECT().
 		ReadBuildInfo().
 		Return(&debug.BuildInfo{
 			Main: debug.Module{
-				Path:    expectedPath,
-				Version: versionToNotBeUsed,
+				Path:    modulePath,
+				Version: ignoredVersion,
 			},
 		}, true).
 		Once()
@@ -137,7 +144,7 @@ func TestConfig_Version_VersionSetByLDFLAGS(t *testing.T) {
 	version := cfg.Version()
 
 	// Assert
-	require.Equal(t, expectedPath+" "+expectedVersion, version)
+	require.Equal(t, expectedFullVersion, version)
 }
 
 func TestConfig_Version_VersionUnsetByLDFLAGS(t *testing.T) {
@@ -145,19 +152,22 @@ func TestConfig_Version_VersionUnsetByLDFLAGS(t *testing.T) {
 	mockOSLayer := &configmocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
+	programName := "testprocess"
+	modulePath := "server.com/some/path/to/module"
+	moduleVersion := "v1.2.3"
+	expectedFullVersion := modulePath + " " + moduleVersion
+
 	mockOSLayer.EXPECT().
 		Args().
-		Return([]string{"testprocess"}).
+		Return([]string{programName}).
 		Once()
 
-	expectedPath := "/some/path/to/module"
-	expectedVersion := "v1.2.3"
 	mockOSLayer.EXPECT().
 		ReadBuildInfo().
 		Return(&debug.BuildInfo{
 			Main: debug.Module{
-				Path:    expectedPath,
-				Version: expectedVersion,
+				Path:    modulePath,
+				Version: moduleVersion,
 			},
 		}, true).
 		Once()
@@ -169,7 +179,7 @@ func TestConfig_Version_VersionUnsetByLDFLAGS(t *testing.T) {
 	version := cfg.Version()
 
 	// Assert
-	require.Equal(t, expectedPath+" "+expectedVersion, version)
+	require.Equal(t, expectedFullVersion, version)
 }
 
 func TestConfig_Version_VersionUnsetByLDFLAGS_ButReadBuildInfoNotOK(t *testing.T) {
@@ -177,19 +187,22 @@ func TestConfig_Version_VersionUnsetByLDFLAGS_ButReadBuildInfoNotOK(t *testing.T
 	mockOSLayer := &configmocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
+	programName := "testprocess"
+	modulePath := "server.com/some/path/to/module"
+	moduleVersion := "v1.2.3"
+	expectedFullVersion := modulePath + " (devel)"
+
 	mockOSLayer.EXPECT().
 		Args().
-		Return([]string{"testprocess"}).
+		Return([]string{programName}).
 		Once()
 
-	expectedPath := "/some/path/to/module"
-	expectedVersion := "v1.2.3"
 	mockOSLayer.EXPECT().
 		ReadBuildInfo().
 		Return(&debug.BuildInfo{
 			Main: debug.Module{
-				Path:    expectedPath,
-				Version: expectedVersion,
+				Path:    modulePath,
+				Version: moduleVersion,
 			},
 		}, false).
 		Once()
@@ -201,7 +214,7 @@ func TestConfig_Version_VersionUnsetByLDFLAGS_ButReadBuildInfoNotOK(t *testing.T
 	version := cfg.Version()
 
 	// Assert
-	require.Equal(t, expectedPath+" (devel)", version)
+	require.Equal(t, expectedFullVersion, version)
 }
 
 func TestConfig_DisableTelemetry_HappyPath(t *testing.T) {
@@ -238,9 +251,12 @@ func TestConfig_DisableTelemetry_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -284,9 +300,12 @@ func TestConfig_UseSingleMATLABSession_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -313,14 +332,9 @@ func TestConfig_PreferredLocalMATLABRoot_HappyPath(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "Windows MATLAB path",
-			args:     []string{"--matlab-root=C:\\Program Files\\MATLAB\\R2024b"},
-			expected: "C:\\Program Files\\MATLAB\\R2024b",
-		},
-		{
-			name:     "Unix MATLAB path",
-			args:     []string{"--matlab-root=/usr/local/MATLAB/R2024b"},
-			expected: "/usr/local/MATLAB/R2024b",
+			name:     "custom path",
+			args:     []string{"--matlab-root=" + filepath.Join("path", "to", "matlab")},
+			expected: filepath.Join("path", "to", "matlab"),
 		},
 	}
 
@@ -330,9 +344,12 @@ func TestConfig_PreferredLocalMATLABRoot_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -359,14 +376,9 @@ func TestConfig_PreferredMATLABStartingDirectory_HappyPath(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "Windows custom project path",
-			args:     []string{"--initial-working-folder=D:\\MATLAB_Projects"},
-			expected: "D:\\MATLAB_Projects",
-		},
-		{
-			name:     "Unix custom project path",
-			args:     []string{"--initial-working-folder=/opt/matlab_work"},
-			expected: "/opt/matlab_work",
+			name:     "custom project path",
+			args:     []string{"--initial-working-folder=" + filepath.Join("path", "to", "project")},
+			expected: filepath.Join("path", "to", "project"),
 		},
 	}
 
@@ -376,9 +388,12 @@ func TestConfig_PreferredMATLABStartingDirectory_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -406,8 +421,8 @@ func TestConfig_LogDirectory_HappyPath(t *testing.T) {
 		},
 		{
 			name:     "Supplied log directory",
-			args:     []string{"--log-folder=/logs"},
-			expected: "/logs",
+			args:     []string{"--log-folder=" + filepath.Join("tmp", "logs")},
+			expected: filepath.Join("tmp", "logs"),
 		},
 	}
 
@@ -417,9 +432,12 @@ func TestConfig_LogDirectory_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -473,9 +491,12 @@ func TestConfig_LogLevel_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)
@@ -496,9 +517,12 @@ func TestConfig_LogLevel_Invalid(t *testing.T) {
 	mockOSLayer := &configmocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
+	programName := "testprocess"
+	args := append([]string{programName}, "--log-level=invalid")
+
 	mockOSLayer.EXPECT().
 		Args().
-		Return(append([]string{"testprocess"}, "--log-level=invalid")).
+		Return(args).
 		Once()
 
 	// Act
@@ -514,9 +538,12 @@ func TestConfig_LogLevel_EmptyIsInvalid(t *testing.T) {
 	mockOSLayer := &configmocks.MockOSLayer{}
 	defer mockOSLayer.AssertExpectations(t)
 
+	programName := "testprocess"
+	args := append([]string{programName}, "--log-level=")
+
 	mockOSLayer.EXPECT().
 		Args().
-		Return(append([]string{"testprocess"}, "--log-level=")).
+		Return(args).
 		Once()
 
 	// Act
@@ -547,14 +574,20 @@ func TestConfig_Log_HappyPath(t *testing.T) {
 			},
 		},
 		{
-			name:               "custom configuration",
-			args:               []string{"--disable-telemetry", "--use-single-matlab-session=false", "--log-level=debug", "--initial-working-folder=/home/user", "--matlab-root=/home/matlab"},
+			name: "custom configuration",
+			args: []string{
+				"--disable-telemetry",
+				"--use-single-matlab-session=false",
+				"--log-level=debug",
+				"--initial-working-folder=" + filepath.Join("home", "user"),
+				"--matlab-root=" + filepath.Join("home", "matlab"),
+			},
 			expectedLogMessage: "Configuration state",
 			expectedConfigField: map[string]any{
 				"disable-telemetry":         true,
-				"initial-working-folder":    "/home/user",
+				"initial-working-folder":    filepath.Join("home", "user"),
 				"log-level":                 entities.LogLevelDebug,
-				"matlab-root":               "/home/matlab",
+				"matlab-root":               filepath.Join("home", "matlab"),
 				"use-single-matlab-session": false,
 			},
 		},
@@ -566,9 +599,12 @@ func TestConfig_Log_HappyPath(t *testing.T) {
 			mockOSLayer := &configmocks.MockOSLayer{}
 			defer mockOSLayer.AssertExpectations(t)
 
+			programName := "testprocess"
+			args := append([]string{programName}, testConfig.args...)
+
 			mockOSLayer.EXPECT().
 				Args().
-				Return(append([]string{"testprocess"}, testConfig.args...)).
+				Return(args).
 				Once()
 
 			cfg, err := config.New(mockOSLayer)

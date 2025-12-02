@@ -28,10 +28,6 @@ func TestNewToolWithUnstructuredContentOutput_HappyPath(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
 
 	const (
 		toolName        = "test-unstructured-tool"
@@ -44,6 +40,11 @@ func TestNewToolWithUnstructuredContentOutput_HappyPath(t *testing.T) {
 			TextContent: []string{"test response"},
 		}, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
 
 	// Act
 	tool := basetool.NewToolWithUnstructuredContent(
@@ -75,12 +76,8 @@ func TestToolWithUnstructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	defer mockAdder.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
 
-	server := mcp.NewServer(&mcp.Implementation{}, &mcp.ServerOptions{})
+	expectedServer := mcp.NewServer(&mcp.Implementation{}, &mcp.ServerOptions{})
 
 	const (
 		toolName        = "test-unstructured-tool"
@@ -94,6 +91,11 @@ func TestToolWithUnstructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 		}, nil
 	}
 
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
 	tool := basetool.NewToolWithUnstructuredContent(
 		toolName,
 		toolTitle,
@@ -106,7 +108,7 @@ func TestToolWithUnstructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	require.NoError(t, err, "GetInputSchema should not return an error")
 
 	mockAdder.EXPECT().AddTool(
-		server,
+		expectedServer,
 		&mcp.Tool{
 			Name:         toolName,
 			Title:        toolTitle,
@@ -120,7 +122,7 @@ func TestToolWithUnstructuredContentOutput_AddToServer_HappyPath(t *testing.T) {
 	tool.SetToolAdder(mockAdder)
 
 	// Act
-	err = tool.AddToServer(server)
+	err = tool.AddToServer(expectedServer)
 
 	// Assert
 	require.NoError(t, err, "AddToServer should not return an error")
@@ -132,13 +134,7 @@ func TestToolWithUnstructuredContentOutput_Handler_HappyPath(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
-
-	mockSession := &mcp.ServerSession{}
-
+	expectedSession := &mcp.ServerSession{}
 	expectedInput := TestUnstructuredInput{Query: "test query"}
 	expectedRichContent := tools.RichContent{
 		TextContent:  []string{"text response"},
@@ -146,14 +142,20 @@ func TestToolWithUnstructuredContentOutput_Handler_HappyPath(t *testing.T) {
 	}
 
 	mockSessionLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
-		Return(mockSessionLogger).
-		Once()
 
 	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
 		return expectedRichContent, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
+	mockLoggerFactory.EXPECT().
+		NewMCPSessionLogger(expectedSession).
+		Return(mockSessionLogger).
+		Once()
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -164,7 +166,7 @@ func TestToolWithUnstructuredContentOutput_Handler_HappyPath(t *testing.T) {
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -192,27 +194,27 @@ func TestToolWithUnstructuredContentOutput_Handler_TextContentOnly(t *testing.T)
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
-
-	mockSession := &mcp.ServerSession{}
-
+	expectedSession := &mcp.ServerSession{}
 	expectedInput := TestUnstructuredInput{Query: "test query"}
 	expectedRichContent := tools.RichContent{
 		TextContent: []string{"response 1", "response 2"},
 	}
 
 	mockSessionLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
-		Return(mockSessionLogger).
-		Once()
 
 	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
 		return expectedRichContent, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
+	mockLoggerFactory.EXPECT().
+		NewMCPSessionLogger(expectedSession).
+		Return(mockSessionLogger).
+		Once()
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -223,7 +225,7 @@ func TestToolWithUnstructuredContentOutput_Handler_TextContentOnly(t *testing.T)
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -250,13 +252,7 @@ func TestToolWithUnstructuredContentOutput_Handler_ImageContentOnly(t *testing.T
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
-
-	mockSession := &mcp.ServerSession{}
-
+	expectedSession := &mcp.ServerSession{}
 	expectedInput := TestUnstructuredInput{Query: "test query"}
 	expectedRichContent := tools.RichContent{
 		ImageContent: []tools.PNGImageData{
@@ -266,14 +262,20 @@ func TestToolWithUnstructuredContentOutput_Handler_ImageContentOnly(t *testing.T
 	}
 
 	mockSessionLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
-		Return(mockSessionLogger).
-		Once()
 
 	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
 		return expectedRichContent, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
+	mockLoggerFactory.EXPECT().
+		NewMCPSessionLogger(expectedSession).
+		Return(mockSessionLogger).
+		Once()
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -284,7 +286,7 @@ func TestToolWithUnstructuredContentOutput_Handler_ImageContentOnly(t *testing.T
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -313,13 +315,7 @@ func TestToolWithUnstructuredContentOutput_Handler_NoContent(t *testing.T) {
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
-
-	mockSession := &mcp.ServerSession{}
-
+	expectedSession := &mcp.ServerSession{}
 	expectedInput := TestUnstructuredInput{Query: "test query"}
 	expectedRichContent := tools.RichContent{
 		TextContent:  []string{},
@@ -327,14 +323,20 @@ func TestToolWithUnstructuredContentOutput_Handler_NoContent(t *testing.T) {
 	}
 
 	mockSessionLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
-		Return(mockSessionLogger).
-		Once()
 
 	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
 		return expectedRichContent, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
+	mockLoggerFactory.EXPECT().
+		NewMCPSessionLogger(expectedSession).
+		Return(mockSessionLogger).
+		Once()
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -345,7 +347,7 @@ func TestToolWithUnstructuredContentOutput_Handler_NoContent(t *testing.T) {
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -364,25 +366,24 @@ func TestToolWithUnstructuredContentOutput_Handler_UnstructuredHandlerError(t *t
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
+	expectedSession := &mcp.ServerSession{}
+	expectedInput := TestUnstructuredInput{Query: "test query"}
+	expectedError := assert.AnError
+	mockSessionLogger := testutils.NewInspectableLogger()
+
+	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
+		return tools.RichContent{}, expectedError
+	}
+
 	mockLoggerFactory.EXPECT().
 		GetGlobalLogger().
 		Return(mockLogger).
 		Once()
 
-	mockSession := &mcp.ServerSession{}
-
-	expectedInput := TestUnstructuredInput{Query: "test query"}
-	expectedError := assert.AnError
-
-	mockSessionLogger := testutils.NewInspectableLogger()
 	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
+		NewMCPSessionLogger(expectedSession).
 		Return(mockSessionLogger).
 		Once()
-
-	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
-		return tools.RichContent{}, expectedError
-	}
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -393,7 +394,7 @@ func TestToolWithUnstructuredContentOutput_Handler_UnstructuredHandlerError(t *t
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
@@ -411,29 +412,28 @@ func TestToolWithUnstructuredContentOutput_Handler_ContextPropagation(t *testing
 	defer mockLoggerFactory.AssertExpectations(t)
 
 	mockLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		GetGlobalLogger().
-		Return(mockLogger).
-		Once()
-
-	mockSession := &mcp.ServerSession{}
-
+	expectedSession := &mcp.ServerSession{}
 	expectedInput := TestUnstructuredInput{Query: "test query"}
 	expectedRichContent := tools.RichContent{
 		TextContent: []string{"success"},
 	}
-
 	mockSessionLogger := testutils.NewInspectableLogger()
-	mockLoggerFactory.EXPECT().
-		NewMCPSessionLogger(mockSession).
-		Return(mockSessionLogger).
-		Once()
 
 	contextReceived := make(chan context.Context, 1) // Buffering to avoid deadlock
 	handler := func(ctx context.Context, logger entities.Logger, input TestUnstructuredInput) (tools.RichContent, error) {
 		contextReceived <- ctx
 		return expectedRichContent, nil
 	}
+
+	mockLoggerFactory.EXPECT().
+		GetGlobalLogger().
+		Return(mockLogger).
+		Once()
+
+	mockLoggerFactory.EXPECT().
+		NewMCPSessionLogger(expectedSession).
+		Return(mockSessionLogger).
+		Once()
 
 	tool := basetool.NewToolWithUnstructuredContent(
 		"test-tool",
@@ -444,7 +444,7 @@ func TestToolWithUnstructuredContentOutput_Handler_ContextPropagation(t *testing
 	)
 
 	req := &mcp.CallToolRequest{
-		Session: mockSession,
+		Session: expectedSession,
 	}
 
 	// Act
