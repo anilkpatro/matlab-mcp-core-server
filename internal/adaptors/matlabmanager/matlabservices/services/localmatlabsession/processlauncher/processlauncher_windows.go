@@ -8,11 +8,10 @@ import (
 	"iter"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 	"time"
 	"unsafe"
 
+	"github.com/matlab/matlab-mcp-core-server/internal/adaptors/matlabmanager/matlabservices/services/localmatlabsession/processlauncher/utils/winenvironmentbuilder"
 	"github.com/matlab/matlab-mcp-core-server/internal/entities"
 	"golang.org/x/sys/windows"
 )
@@ -32,9 +31,14 @@ func startMatlab(logger entities.Logger, matlabRoot string, workingDir string, a
 		cmdLine += ` "` + arg + `"`
 	}
 
-	envBlock, err := buildEnvironmentBlock(env)
+	envBlock, err := winenvironmentbuilder.Build(env)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build environment block: %w", err)
+	}
+
+	envPtr := envBlock.PointerToFirstElement()
+	if envPtr == nil {
+		return nil, fmt.Errorf("failed to get environment block pointer")
 	}
 
 	cmdLinePtr, err := windows.UTF16PtrFromString(cmdLine)
@@ -65,7 +69,7 @@ func startMatlab(logger entities.Logger, matlabRoot string, workingDir string, a
 		nil,           // threadSecurity
 		true,          // inheritHandles
 		creationFlags, // creationFlags
-		envBlock,      // env
+		envPtr,        // env
 		workingDirPtr, // currentDir
 		&si,           // startupInfo
 		&pi,           // outProcInfo
@@ -94,55 +98,6 @@ func startMatlab(logger entities.Logger, matlabRoot string, workingDir string, a
 	}
 
 	return matlabProcess, nil
-}
-
-// buildEnvironmentBlock builds a UTF-16 environment block suitable for CreateProcess.
-// - Each entry is "name=value" NUL-terminated
-// - The block ends with an extra NUL
-// - Entries are sorted case-insensitively by name (Windows requirement for Unicode blocks)
-// - Duplicate names are resolved by keeping the last occurrence.
-// - Returning the first pointer of the array of the environment block as required by the CreateProcess function.
-func buildEnvironmentBlock(env []string) (*uint16, error) {
-	if len(env) == 0 {
-		return nil, nil
-	}
-
-	type kv struct{ nameUpper, entry string }
-
-	// Deduplicate by case-insensitive name: last wins
-	m := make(map[string]string, len(env))
-	for _, e := range env {
-		if strings.IndexByte(e, 0) >= 0 {
-			return nil, fmt.Errorf("environment entry contains NUL: %q", e)
-		}
-		name, value, ok := strings.Cut(e, "=")
-		if !ok || name == "" {
-			return nil, fmt.Errorf("invalid environment entry (expected name=value): %q", e)
-		}
-		if name[0] == '=' {
-			return nil, fmt.Errorf("invalid environment variable name (starts with '='): %q", e)
-		}
-		m[strings.ToUpper(name)] = name + "=" + value
-	}
-
-	// Collect and sort by case-insensitive name
-	entries := make([]kv, 0, len(m))
-	for upperName, entry := range m {
-		entries = append(entries, kv{nameUpper: upperName, entry: entry})
-	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].nameUpper < entries[j].nameUpper })
-
-	// Flatten to UTF-16: each entry is NUL-terminated; add an extra NUL at the end
-	var block []uint16
-	for _, e := range entries {
-		w, err := windows.UTF16FromString(e.entry) // includes trailing NUL
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode env entry %q: %w", e.entry, err)
-		}
-		block = append(block, w...)
-	}
-	block = append(block, 0) // final extra NUL
-	return &block[0], nil
 }
 
 func waitForMATLABProcess(logger entities.Logger, matlabLauncherProcess *os.Process) (*os.Process, error) {
